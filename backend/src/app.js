@@ -16,16 +16,13 @@ const io = new Server(server, {
   cors: { origin: process.env.FRONTEND_URL, credentials: true },
 });
 
-// Attach io to app so routes can access it
 app.set('io', io);
 
-// Middleware
 app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// Rate limit on auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -35,6 +32,9 @@ app.use('/api/auth', authLimiter);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
+// Routes
+app.use('/api/auth', require('./modules/auth/routes'));
 
 // Socket.io
 io.on('connection', (socket) => {
@@ -48,7 +48,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Error handler (must be last)
 app.use(errorHandler);
 
 module.exports = { app, server };
