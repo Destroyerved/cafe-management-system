@@ -13,7 +13,7 @@
 
 ## 🏆 Built At
 
-**DAIICT Prama Innovations Hackathon 2026** — Team Yogya
+**ODOO x INDUS Hackathon 2026** — Team Cracking crax daily (team leader : yug gandhi)
 
 ---
 
@@ -22,9 +22,9 @@
 | Member | Role | Responsibilities |
 |--------|------|-----------------|
 | **Yug Gandhi** | Backend & Database | All 18 DB tables, 14 migrations, 13 indexes, JWT auth, Socket.io, reports engine, seed data (500+ customers, 1000+ orders), UPI QR, image storage |
-| **Kushagra Mali** | Routes & Integrations | All 31+ Express route handlers, Zod validation on every route, pagination middleware, Socket.io kitchen integration, payment routes, customer auth |
-| **Ansh** | Frontend Development | All React pages, Zustand stores, Axios interceptors, TanStack Query, POS terminal, kitchen display, admin dashboard, Recharts analytics |
-| **Princy** | UI & Research | Neo-brutalist design system, CSS modules, UX research, wireframes, GST tax research, retention thresholds, product image curation |
+| **Kush maurya** | Routes & Integrations | All 31+ Express route handlers, Zod validation on every route, pagination middleware, Socket.io kitchen integration, payment routes, customer auth |
+| **Ansh agarwal** | Frontend Development | All React pages, Zustand stores, Axios interceptors, TanStack Query, POS terminal, kitchen display, admin dashboard, Recharts analytics |
+| **Princy soni** | UI & Research | Neo-brutalist design system, CSS modules, UX research, wireframes, GST tax research, retention thresholds, product image curation |
 
 ---
 
@@ -654,6 +654,6 @@ feature/*  ← individual features merged into develop
 
 ---
 
-*Built with ☕ by Team Yogya — DAIICT Hackathon 2026*
+*Built with ☕ by Team Cracking crax daily — Odoo x Indus hackathon 2026*
 
-*Yug Gandhi (Backend & DB) · Kushagra Mali (Routes & Integrations) · Ansh (Frontend) · Princy (UI & Research)*
+*Yug Gandhi (Backend & DB) · Kush Maurya (Routes & Integrations) · Ansh (Frontend) · Princy (UI & Research)*
