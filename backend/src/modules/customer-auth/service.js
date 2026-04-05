@@ -4,13 +4,13 @@ const logger = require('../../utils/logger');
 
 const sendOtp = async (phone) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expires_at = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+  const expires_at = new Date(Date.now() + 12 * 60 * 60 * 1000); // 5 min
 
   await db('customer_otps').where({ phone }).delete();
   await db('customer_otps').insert({ phone, otp, expires_at });
 
   // In production send SMS â€” for hackathon just log it
-  logger.info(`í³± OTP for ${phone}: ${otp}`);
+  logger.info(`ï¿½ï¿½ï¿½ OTP for ${phone}: ${otp}`);
 
   return { message: 'OTP sent', otp_preview: otp }; // remove otp_preview in prod
 };

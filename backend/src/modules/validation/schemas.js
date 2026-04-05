@@ -7,8 +7,8 @@ const createProductSchema = z.object({
   tax_percent: z.coerce.number().min(0).max(100).default(0),
   unit_of_measure: z.string().default('Unit'),
   description: z.string().optional().nullable(),
+  image_url: z.string().optional().nullable(),
 });
-
 const updateProductSchema = createProductSchema.partial();
 
 const createCategorySchema = z.object({

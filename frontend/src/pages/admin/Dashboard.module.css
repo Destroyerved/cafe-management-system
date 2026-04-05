@@ -609,6 +609,104 @@
   color: #64748b;
 }
 
+/* PAGINATION */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 3px solid #000;
+  background: #f8fafc;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.paginationInfo {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pageControls {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pageBtn {
+  padding: 6px 12px;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 2px 2px 0 0 #000;
+  transition: all 120ms;
+  font-family: 'Inter', sans-serif;
+  min-width: 34px;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: #facc15;
+  box-shadow: 1px 1px 0 0 #000;
+  transform: translate(1px, 1px);
+}
+
+.pageBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pageBtnActive {
+  background: #000000;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.pageBtnActive:hover {
+  background: #000000 !important;
+  transform: none !important;
+}
+
+/* CATEGORY FILTER TABS */
+.catTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.catTab {
+  padding: 6px 14px;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 3px 3px 0 0 #000;
+  transition: all 120ms;
+  font-family: 'Inter', sans-serif;
+}
+
+.catTab:hover {
+  box-shadow: 1px 1px 0 0 #000;
+  transform: translate(2px, 2px);
+}
+
+.catTabActive {
+  box-shadow: 1px 1px 0 0 #000;
+  transform: translate(2px, 2px);
+}
+
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   .kpiGrid {

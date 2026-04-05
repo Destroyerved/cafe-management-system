@@ -3,37 +3,30 @@ const crypto = require('crypto');
 const { getCustomerByToken } = require('../customer-auth/service');
 
 const generateToken = async (table_id, session_id) => {
-  const table = await db('tables').where({ id: table_id }).first();
+  // Legacy function. The QR code generator now uses table.qr_token
+  return { url: `/s/deprecated` };
+};
+
+const resolveTableState = async (token) => {
+  const table = await db('tables').where({ qr_token: token, active: true }).first();
   if (!table) {
-    const err = new Error('Table not found');
+    const err = new Error('Invalid or inactive table QR code');
     err.statusCode = 404;
     throw err;
   }
-
-  await db('self_order_tokens')
-    .where({ table_id, session_id })
-    .update({ is_active: false });
-
-  const token = crypto.randomBytes(24).toString('hex');
-  const [record] = await db('self_order_tokens')
-    .insert({ table_id, session_id, token, is_active: true })
-    .returning('*');
-
-  return { ...record, url: `/s/${token}` };
+  const floor = await db('floors').where({ id: table.floor_id }).first();
+  const session = await db('sessions').where({ pos_config_id: floor.pos_config_id, status: 'open' }).first();
+  
+  if (!session) {
+    const err = new Error('Ordering is currently offline for this table');
+    err.statusCode = 400;
+    throw err;
+  }
+  return { table, floor, session };
 };
 
 const getByToken = async (token) => {
-  const record = await db('self_order_tokens')
-    .where({ token, is_active: true })
-    .first();
-  if (!record) {
-    const err = new Error('Invalid or expired token');
-    err.statusCode = 404;
-    throw err;
-  }
-
-  const table = await db('tables').where({ id: record.table_id }).first();
-  const session = await db('sessions').where({ id: record.session_id }).first();
+  const { table, session } = await resolveTableState(token);
   const posConfig = await db('pos_configs').where({ id: session.pos_config_id }).first();
   const categories = await db('product_categories').orderBy('sequence');
   const products = await db('products').where({ is_active: true }).orderBy('name');
@@ -42,29 +35,24 @@ const getByToken = async (token) => {
 };
 
 const placeOrder = async (token, { customer_token, items, notes }) => {
-  const record = await db('self_order_tokens').where({ token, is_active: true }).first();
-  if (!record) {
-    const err = new Error('Invalid table token');
-    err.statusCode = 404;
-    throw err;
-  }
+  const { table, session } = await resolveTableState(token);
 
   // Verify customer
   const customer = await getCustomerByToken(customer_token);
 
   // Create or get existing draft order for this table
   let order = await db('orders')
-    .where({ session_id: record.session_id, table_id: record.table_id, status: 'draft' })
+    .where({ session_id: session.id, table_id: table.id, status: 'draft' })
     .first();
 
   if (!order) {
-    const maxResult = await db('orders').where({ session_id: record.session_id }).max('order_number as max').first();
+    const maxResult = await db('orders').where({ session_id: session.id }).max('order_number as max').first();
     const order_number = (maxResult.max || 0) + 1;
-    const staff = await db('sessions').where({ id: record.session_id }).first();
+    const staff = await db('sessions').where({ id: session.id }).first();
     ;[order] = await db('orders')
       .insert({
-        session_id: record.session_id,
-        table_id: record.table_id,
+        session_id: session.id,
+        table_id: table.id,
         customer_id: customer.id,
         order_number,
         status: 'draft',
@@ -114,17 +102,12 @@ const placeOrder = async (token, { customer_token, items, notes }) => {
 };
 
 const getOrderStatus = async (token, customer_token) => {
-  const record = await db('self_order_tokens').where({ token, is_active: true }).first();
-  if (!record) {
-    const err = new Error('Invalid token');
-    err.statusCode = 404;
-    throw err;
-  }
+  const { table, session } = await resolveTableState(token);
 
   const customer = await getCustomerByToken(customer_token);
 
   const order = await db('orders')
-    .where({ session_id: record.session_id, table_id: record.table_id, customer_id: customer.id })
+    .where({ session_id: session.id, table_id: table.id, customer_id: customer.id })
     .orderBy('created_at', 'desc')
     .first();
 

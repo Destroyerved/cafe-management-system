@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
@@ -7,10 +8,20 @@ import toast from 'react-hot-toast';
 import styles from './POS.module.css';
 
 export default function PosSelect() {
-  const { user } = useAuthStore();
-  const { setSession, setPosConfig } = usePosStore();
+  const { user, clearAuth } = useAuthStore();
+  const { setSession, setPosConfig, clearPos } = usePosStore();
   const navigate = useNavigate();
 
+  // Reset any stale pos state whenever this page mounts (after logout / fresh login)
+  useEffect(() => { clearPos(); }, []);
+
+  const handleLogout = async () => {
+    try { await api.post('/auth/logout'); } catch { }
+    clearAuth();
+    clearPos();
+    navigate('/login');
+    toast.success('Logged out');
+  };
   const { data: configs, isLoading } = useQuery({
     queryKey: ['pos-configs'],
     queryFn: () => api.get('/pos-configs').then(r => r.data.data),
@@ -123,6 +134,13 @@ export default function PosSelect() {
           onClick={() => navigate('/dashboard')}
         >
           ← Back to Dashboard
+        </button>
+        <button
+          className={styles.backBtn}
+          onClick={handleLogout}
+          style={{ marginLeft: 8, borderColor: '#ef4444', color: '#ef4444' }}
+        >
+          Logout
         </button>
       </div>
     </div>

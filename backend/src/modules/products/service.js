@@ -1,23 +1,42 @@
 const db = require('../../db');
 
-const list = async ({ search, category_id, is_active, page = 1, limit = 50 } = {}) => {
-  const query = db('products')
+const list = async ({ search, category_id, is_active, page = 1, limit = 20 } = {}) => {
+  page  = parseInt(page);
+  limit = parseInt(limit);
+
+  const applyFilters = (q) => {
+    if (search)      q.whereIlike('products.name', `%${search}%`);
+    if (category_id) q.where('products.category_id', category_id);
+    if (is_active !== undefined)
+      q.where('products.is_active', is_active === 'true' || is_active === true);
+    return q;
+  };
+
+  const base = () =>
+    db('products').leftJoin('product_categories', 'products.category_id', 'product_categories.id');
+
+  const [{ count }] = await applyFilters(base()).count('products.id as count');
+  const total  = parseInt(count);
+  const pages  = Math.ceil(total / limit) || 1;
+  const offset = (page - 1) * limit;
+
+  const data = await applyFilters(base())
     .select(
       'products.*',
       'product_categories.name as category_name',
       'product_categories.color as category_color'
     )
-    .leftJoin('product_categories', 'products.category_id', 'product_categories.id')
-    .orderBy('products.name', 'asc');
+    .orderBy('products.name', 'asc')
+    .limit(limit)
+    .offset(offset);
 
-  if (search) query.whereIlike('products.name', `%${search}%`);
-  if (category_id) query.where('products.category_id', category_id);
-  if (is_active !== undefined) query.where('products.is_active', is_active === 'true' || is_active === true);
+  const from = total > 0 ? offset + 1 : 0;
+  const to   = Math.min(offset + data.length, total);
 
-  const offset = (page - 1) * limit;
-  query.limit(limit).offset(offset);
-
-  return query;
+  return {
+    data,
+    meta: { total, page, limit, pages, showing: `${from}–${to} of ${total}` },
+  };
 };
 
 const getById = async (id) => {
@@ -35,17 +54,17 @@ const getById = async (id) => {
   return { ...product, variants };
 };
 
-const create = async ({ name, category_id, price, tax_percent = 0, unit_of_measure = 'Unit', description }) => {
+const create = async ({ name, category_id, price, tax_percent = 0, unit_of_measure = 'Unit', description, image_url }) => {
   const [product] = await db('products')
-    .insert({ name, category_id, price, tax_percent, unit_of_measure, description })
+    .insert({ name, category_id, price, tax_percent, unit_of_measure, description, image_url: image_url || null })
     .returning('*');
   return product;
 };
 
-const update = async (id, { name, category_id, price, tax_percent, unit_of_measure, description }) => {
+const update = async (id, { name, category_id, price, tax_percent, unit_of_measure, description, image_url }) => {
   const [product] = await db('products')
     .where({ id })
-    .update({ name, category_id, price, tax_percent, unit_of_measure, description, updated_at: db.fn.now() })
+    .update({ name, category_id, price, tax_percent, unit_of_measure, description, image_url, updated_at: db.fn.now() })
     .returning('*');
   if (!product) {
     const err = new Error('Product not found');
@@ -54,6 +73,7 @@ const update = async (id, { name, category_id, price, tax_percent, unit_of_measu
   }
   return product;
 };
+
 
 const toggleActive = async (id) => {
   const product = await db('products').where({ id }).first();

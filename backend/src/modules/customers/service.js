@@ -10,22 +10,39 @@ const INDIAN_STATES = [
   'Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
-const list = async ({ search, page = 1, limit = 20 } = {}) => {
-  const query = db('customers')
+const list = async ({ search, page = 1, limit = 30 } = {}) => {
+  page  = parseInt(page);
+  limit = parseInt(limit);
+
+  const applyFilters = (q) => {
+    if (search) {
+      q.where(function () {
+        this.whereIlike('name', `%${search}%`)
+            .orWhereIlike('email', `%${search}%`)
+            .orWhereIlike('phone', `%${search}%`);
+      });
+    }
+    return q;
+  };
+
+  const [{ count }] = await applyFilters(db('customers').clone()).count('id as count');
+  const total  = parseInt(count);
+  const pages  = Math.ceil(total / limit) || 1;
+  const offset = (page - 1) * limit;
+
+  const data = await applyFilters(db('customers').clone())
     .select('*')
-    .orderBy('name', 'asc')
+    .orderBy('total_sales', 'desc')
     .limit(limit)
-    .offset((page - 1) * limit);
+    .offset(offset);
 
-  if (search) {
-    query.where(function() {
-      this.whereIlike('name', `%${search}%`)
-        .orWhereIlike('email', `%${search}%`)
-        .orWhereIlike('phone', `%${search}%`);
-    });
-  }
+  const from = total > 0 ? offset + 1 : 0;
+  const to   = Math.min(offset + data.length, total);
 
-  return query;
+  return {
+    data,
+    meta: { total, page, limit, pages, showing: `${from}–${to} of ${total}` },
+  };
 };
 
 const getById = async (id) => {

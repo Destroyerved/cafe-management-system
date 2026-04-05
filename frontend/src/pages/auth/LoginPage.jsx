@@ -8,6 +8,12 @@ import api from '../../api/axios';
 import { useAuthStore } from '../../store/authStore';
 import styles from './Auth.module.css';
 
+const DEMO_CREDS = [
+  { label: 'Admin', email: 'admin@pos-cafe.com', password: 'Admin@1234' },
+  { label: 'Staff', email: 'raj@pos-cafe.com', password: 'Staff@1234' },
+  { label: 'Kitchen', email: 'arjun@pos-cafe.com', password: 'Kitchen@1234' },
+];
+
 const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
@@ -19,9 +25,14 @@ export default function LoginPage() {
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
   });
+
+  const fillDemo = (cred) => {
+    setValue('email', cred.email);
+    setValue('password', cred.password);
+  };
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -85,6 +96,17 @@ export default function LoginPage() {
             {loading ? <span className={styles.spinner} /> : 'Sign In'}
           </button>
         </form>
+
+        <div className={styles.demoSection}>
+          <div className={styles.demoLabel}>Demo Credentials</div>
+          <div className={styles.demoBtns}>
+            {DEMO_CREDS.map(c => (
+              <button key={c.label} type="button" className={styles.demoBtn} onClick={() => fillDemo(c)}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <p className={styles.switch}>
           No account?{' '}

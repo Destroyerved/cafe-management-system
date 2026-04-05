@@ -1,593 +1,310 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
+// ── tiny helpers ──────────────────────────────────────────────────
+const rnd    = a  => a[Math.floor(Math.random() * a.length)];
+const rndInt = (mn, mx) => Math.floor(Math.random() * (mx - mn + 1)) + mn;
+const uid    = () => crypto.randomBytes(16).toString('hex');
+
+// ── product catalogue  [name, price, tax%] ────────────────────────
+const PRODS = {
+  Food: [
+    ['Masala Dosa',120,5],['Plain Dosa',90,5],['Idli (3 pcs)',80,5],['Medu Vada',70,5],
+    ['Upma',80,5],['Poha',70,5],['Pav Bhaji',140,5],['Chole Bhature',160,5],
+    ['Paneer Tikka',220,5],['Dal Makhani',180,5],['Paneer Butter Masala',200,5],['Rajma Chawal',150,5],
+    ['Veg Biryani',180,5],['Chicken Biryani',240,5],['Butter Chicken',260,5],['Chicken Tikka',280,5],
+    ['Mutton Curry',320,5],['Fish Fry',300,5],['Egg Bhurji',120,5],['Masala Omelette',100,5],
+    ['Veg Sandwich',110,5],['Club Sandwich',160,5],['Grilled Sandwich',140,5],['Cheese Toast',100,5],
+    ['Garlic Bread',90,5],['Frankie Veg',120,5],['Frankie Chicken',150,5],['Veg Burger',160,5],
+    ['Chicken Burger',200,5],['Pizza Margherita',280,5],['Pizza BBQ Chicken',360,5],['Pasta Arrabiata',220,5],
+  ],
+  Drinks: [
+    ['Masala Chai',40,0],['Ginger Tea',40,0],['Green Tea',50,0],['Black Coffee',60,0],
+    ['Filter Coffee',50,0],['Cappuccino',120,0],['Latte',130,0],['Espresso',80,0],
+    ['Cold Coffee',140,0],['Iced Latte',150,0],['Caramel Frappe',180,0],['Hot Chocolate',160,0],
+    ['Turmeric Latte',130,0],['Rose Milk',80,0],['Mango Lassi',100,0],['Sweet Lassi',80,0],
+    ['Chaas',50,0],['Fresh Lime Soda',70,0],['Lemonade',80,0],['Virgin Mojito',120,0],
+    ['Watermelon Juice',100,0],['Orange Juice',120,0],['Pineapple Juice',110,0],['Mixed Fruit Juice',130,0],
+    ['Coconut Water',80,0],['Sugarcane Juice',60,0],['Nimbu Pani',50,0],['Aam Panna',80,0],
+    ['Jaljeera',60,0],['Strawberry Shake',160,0],
+  ],
+  Dessert: [
+    ['Gulab Jamun',80,0],['Jalebi',70,0],['Rasgulla',80,0],['Kheer',100,0],
+    ['Phirni',110,0],['Shahi Tukda',140,0],['Gajar Halwa',120,0],['Kulfi Malai',80,0],
+    ['Mango Kulfi',90,0],['Chocolate Brownie',150,0],['Chocolate Cake Slice',160,0],['Cheesecake',200,0],
+    ['Tiramisu',220,0],['Vanilla Ice Cream',100,0],['Chocolate Sundae',160,0],['Belgian Waffles',200,0],
+    ['Pancake Stack',180,0],['Crepes',170,0],['Payasam',100,0],['Rabri',130,0],
+    ['Laddoo',80,0],['Kaju Barfi',150,0],['Coconut Barfi',120,0],['Sandesh',110,0],
+    ['Moong Dal Halwa',130,0],
+  ],
+  Snacks: [
+    ['Bhel Puri',80,5],['Sev Puri',90,5],['Pani Puri',70,5],['Dahi Puri',90,5],
+    ['Aloo Tikki',80,5],['Papdi Chaat',100,5],['Fruit Chaat',110,5],['Corn Chaat',100,5],
+    ['Chicken Wings',220,5],['Cheese Fingers',160,5],['Potato Wedges',140,5],['Nachos',160,5],
+    ['Mozzarella Sticks',180,5],['Veg Spring Rolls',140,5],['Veg Momos',120,5],['Chicken Momos',150,5],
+    ['Peri Peri Fries',130,5],['Masala Fries',120,5],['Onion Rings',140,5],['Mix Pakora',100,5],
+    ['Aloo Pakora',80,5],['Paneer Pakora',130,5],['Samosa',60,5],['Kachori',70,5],['Dhokla',90,5],
+  ],
+  Breakfast: [
+    ['Aloo Paratha',100,5],['Gobi Paratha',110,5],['Paneer Paratha',130,5],['Dal Paratha',100,5],
+    ['Methi Thepla',100,5],['Besan Chilla',100,5],['Rava Uttapam',110,5],['Neer Dosa',100,5],
+    ['Appam',110,5],['Puttu',100,5],['Pesarattu',110,5],['Akki Rotti',100,5],
+    ['Batata Vada',80,5],['Egg Toast',100,5],['French Toast',130,5],['Avocado Toast',200,5],
+    ['Granola Bowl',180,5],['Oatmeal Bowl',160,5],['Corn Flakes',140,5],['Muesli Bowl',160,5],
+    ['Curd Rice',110,5],['Veg Breakfast Platter',250,5],['Non-Veg Breakfast Platter',320,5],
+    ['Masala Oats',120,5],['Banana Pancakes',160,5],
+  ],
+  Specials: [
+    ['Veg Thali Today',280,5],['Non-Veg Thali Today',380,5],['Chefs Pasta Special',280,5],['Pasta Alfredo',260,5],
+    ['Pesto Pasta',270,5],['Aglio Olio',250,5],['Mac and Cheese',240,5],['Nachos Sharing Platter',280,5],
+    ['Mezze Platter',350,5],['Truffle Fries',220,5],['Black Burger',280,5],['Rainbow Sandwich',240,5],
+    ['Loaded Fries',200,5],['Quinoa Bowl',280,5],['Buddha Bowl',260,5],['Acai Bowl',300,5],
+    ['Smoothie Bowl',280,5],['Protein Bowl',300,5],['Grilled Veg Platter',320,5],['BBQ Chicken Platter',450,5],
+    ['Cheese Fondue',480,5],['Chocolate Fondue',420,5],['Raclette Platter',500,5],['Charcuterie Board',480,5],
+    ['Detox Bowl',240,5],
+  ],
+};
+
+const COLORS = {
+  Food:'#f97316', Drinks:'#3b82f6', Dessert:'#ec4899',
+  Snacks:'#eab308', Breakfast:'#22c55e', Specials:'#a855f7',
+};
+const IMGS = {
+  Food:      'https://images.unsplash.com/photo-1567337710282-00832b415979?w=400&q=80',
+  Drinks:    'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400&q=80',
+  Dessert:   'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&q=80',
+  Snacks:    'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&q=80',
+  Breakfast: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&q=80',
+  Specials:  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
+};
+
+// ── customer name pools ───────────────────────────────────────────
+const FIRST = [
+  'Aarav','Aditya','Akash','Ananya','Arjun','Aryan','Diya','Fatima','Harsh','Ishaan',
+  'Jiya','Kabir','Kavya','Krish','Meera','Mohammad','Naina','Neha','Om','Pooja',
+  'Priya','Rahul','Raj','Riya','Rohit','Sahil','Sanvi','Sara','Sneha','Suhana',
+  'Tanvi','Uday','Varun','Vidya','Vihaan','Vivek','Yash','Zara','Zoya','Amit',
+];
+const LAST = [
+  'Shah','Patel','Modi','Joshi','Mehta','Desai','Sharma','Verma','Singh','Kumar',
+  'Gupta','Agarwal','Nair','Pillai','Reddy','Iyer','Menon','Bose','Das','Ghosh',
+];
+const CITIES = ['Ahmedabad','Surat','Vadodara','Rajkot','Gandhinagar','Anand','Nadiad','Bharuch','Mehsana','Junagadh'];
+
+const NOTES = [
+  'Less spicy please','No onion no garlic','Extra cheese','Less oil','Well done',
+  'No coriander','Extra sauce','Mild spicy','No ice in drinks','Self ordered via QR',
+  null, null, null, null, null,
+];
+const METHODS = ['cash','cash','cash','cash','digital','digital','upi'];
+
+// ── helper: insert lines + update order totals ────────────────────
+async function buildOrder(knex, orderId, products, numLines) {
+  const picked = [], seen = new Set();
+  for (let i = 0; i < numLines; i++) {
+    let p, t = 0;
+    do { p = rnd(products); t++; } while (seen.has(p.id) && t < 10);
+    seen.add(p.id);
+    const qty  = rndInt(1, 3);
+    const sub  = +(+p.price  * qty).toFixed(2);
+    const tax  = +(sub * +p.tax_percent / 100).toFixed(2);
+    picked.push({ product_id: p.id, name: p.name, qty, unit_price: +p.price, tax_pct: +p.tax_percent, sub, tax, total: +(sub + tax).toFixed(2) });
+  }
+  const lines = await knex('order_lines').insert(
+    picked.map(p => ({
+      order_id: orderId, product_id: p.product_id, quantity: p.qty,
+      unit_price: p.unit_price, tax_percent: p.tax_pct, subtotal: p.sub, total: p.total,
+    }))
+  ).returning('*');
+  const orderSub   = +picked.reduce((s, p) => s + p.sub,   0).toFixed(2);
+  const orderTax   = +picked.reduce((s, p) => s + p.tax,   0).toFixed(2);
+  const orderTotal = +(orderSub + orderTax).toFixed(2);
+  await knex('orders').where({ id: orderId }).update({ subtotal: orderSub, tax_amount: orderTax, total: orderTotal });
+  return { lines, picked, orderTotal };
+}
+
+// ── helper: pay + kitchen for a closed order ──────────────────────
+async function finaliseOrder(knex, order, lines, picked, orderTotal, kitStatus) {
+  await knex('payments').insert({
+    order_id: order.id, method: rnd(METHODS), amount: orderTotal,
+    status: 'confirmed', created_at: order.created_at,
+  });
+  const [ticket] = await knex('kitchen_tickets').insert({
+    order_id: order.id, status: kitStatus, sent_at: order.created_at,
+    completed_at: kitStatus === 'completed' ? new Date(new Date(order.created_at).getTime() + rndInt(8, 22) * 60000).toISOString() : null,
+  }).returning('*');
+  await knex('kitchen_ticket_items').insert(
+    lines.map((l, i) => ({ ticket_id: ticket.id, order_line_id: l.id, product_name: picked[i].name, quantity: l.quantity, is_prepared: kitStatus === 'completed' }))
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
 exports.seed = async function (knex) {
-  // Clean all tables in order
-  await knex('staff_payments').del();
-  await knex('customer_sessions').del();
-  await knex('customer_otps').del();
-  await knex('self_order_tokens').del();
-  await knex('kitchen_ticket_items').del();
-  await knex('kitchen_tickets').del();
-  await knex('payments').del();
-  await knex('order_lines').del();
-  await knex('orders').del();
-  await knex('customers').del();
-  await knex('product_variants').del();
-  await knex('products').del();
-  await knex('product_categories').del();
-  await knex('tables').del();
-  await knex('floors').del();
-  await knex('sessions').del();
-  await knex('pos_configs').del();
-  await knex('users').del();
 
-  // ─── USERS ───────────────────────────────────────────
-  const adminHash = await bcrypt.hash('Admin@1234', 12);
-  const staffHash = await bcrypt.hash('Staff@1234', 12);
-  const kitchenHash = await bcrypt.hash('Kitchen@1234', 12);
+  // ── 1. TRUNCATE (strict FK order) ─────────────────────────────────
+  for (const tbl of [
+    'staff_payments','customer_sessions','customer_otps','self_order_tokens',
+    'kitchen_ticket_items','kitchen_tickets','payments','order_lines','orders',
+    'customers','product_variants','products','product_categories',
+    'tables','floors','sessions','pos_configs','users',
+  ]) await knex(tbl).del();
 
-  const [admin, staff1, staff2, kitchen1] = await knex('users').insert([
-    { name: 'Yug Gandhi', email: 'admin@pos-cafe.com', password_hash: adminHash, role: 'admin', hourly_rate: 150 },
-    { name: 'Raj Kumar', email: 'raj@pos-cafe.com', password_hash: staffHash, role: 'staff', hourly_rate: 80 },
-    { name: 'Priya Sharma', email: 'priya@pos-cafe.com', password_hash: staffHash, role: 'staff', hourly_rate: 80 },
-    { name: 'Chef Arjun', email: 'arjun@pos-cafe.com', password_hash: kitchenHash, role: 'kitchen', hourly_rate: 100 },
+  // ── 2. USERS ───────────────────────────────────────────────────────
+  const [ah, sh, kh] = await Promise.all([
+    bcrypt.hash('Admin@1234', 12), bcrypt.hash('Staff@1234', 12), bcrypt.hash('Kitchen@1234', 12),
+  ]);
+  const [admin, staff1, staff2] = await knex('users').insert([
+    { name: 'Yug Gandhi',   email: 'admin@pos-cafe.com',  password_hash: ah, role: 'admin',   hourly_rate: 150 },
+    { name: 'Raj Kumar',    email: 'raj@pos-cafe.com',    password_hash: sh, role: 'staff',   hourly_rate: 80  },
+    { name: 'Priya Sharma', email: 'priya@pos-cafe.com',  password_hash: sh, role: 'staff',   hourly_rate: 80  },
+    { name: 'Chef Arjun',   email: 'arjun@pos-cafe.com',  password_hash: kh, role: 'kitchen', hourly_rate: 100 },
   ]).returning('*');
+  const staffPool = [staff1, staff2];
 
-  // ─── POS CONFIG ───────────────────────────────────────
+  // ── 3. POS CONFIG ──────────────────────────────────────────────────
   const [config] = await knex('pos_configs').insert({
-    name: 'Cawfee Tawk Cafe',
-    enable_cash: true,
-    enable_digital: true,
-    enable_upi: true,
-    upi_id: '9876543210@ybl',
+    name: 'Cawfee Tawk Cafe', enable_cash: true, enable_digital: true,
+    enable_upi: true, upi_id: '9876543210@ybl',
   }).returning('*');
 
-  // ─── FLOORS & TABLES ──────────────────────────────────
-  const [floor1, floor2] = await knex('floors').insert([
+  // ── 4. FLOORS & TABLES ────────────────────────────────────────────
+  const [gf, ff] = await knex('floors').insert([
     { name: 'Ground Floor', pos_config_id: config.id, sequence: 1 },
-    { name: 'First Floor', pos_config_id: config.id, sequence: 2 },
+    { name: 'First Floor',  pos_config_id: config.id, sequence: 2 },
   ]).returning('*');
 
   const tables = await knex('tables').insert([
-    { floor_id: floor1.id, table_number: 'G1', seats: 2, qr_token: crypto.randomBytes(16).toString('hex') },
-    { floor_id: floor1.id, table_number: 'G2', seats: 4, qr_token: crypto.randomBytes(16).toString('hex') },
-    { floor_id: floor1.id, table_number: 'G3', seats: 4, qr_token: crypto.randomBytes(16).toString('hex') },
-    { floor_id: floor1.id, table_number: 'G4', seats: 6, qr_token: crypto.randomBytes(16).toString('hex') },
-    { floor_id: floor1.id, table_number: 'G5', seats: 8, qr_token: crypto.randomBytes(16).toString('hex') },
-    { floor_id: floor2.id, table_number: 'F1', seats: 2, qr_token: crypto.randomBytes(16).toString('hex') },
-    { floor_id: floor2.id, table_number: 'F2', seats: 4, qr_token: crypto.randomBytes(16).toString('hex') },
-    { floor_id: floor2.id, table_number: 'F3', seats: 6, qr_token: crypto.randomBytes(16).toString('hex') },
+    ...[1,2,3,4].map(n => ({ floor_id: gf.id, table_number: `G${n}`, seats: n <= 2 ? 4 : 6, qr_token: uid() })),
+    ...[1,2,3,4].map(n => ({ floor_id: ff.id, table_number: `F${n}`, seats: n <= 2 ? 4 : 8, qr_token: uid() })),
   ]).returning('*');
+  const tableIds = tables.map(t => t.id);
 
-  // ─── CATEGORIES ───────────────────────────────────────
-  const [food, drinks, dessert, snacks] = await knex('product_categories').insert([
-    { name: 'Food', color: '#f59e0b', sequence: 1 },
-    { name: 'Drinks', color: '#3b82f6', sequence: 2 },
-    { name: 'Dessert', color: '#ec4899', sequence: 3 },
-    { name: 'Snacks', color: '#10b981', sequence: 4 },
-  ]).returning('*');
+  // ── 5. CATEGORIES & PRODUCTS ──────────────────────────────────────
+  const cats = await knex('product_categories').insert(
+    Object.keys(PRODS).map((name, i) => ({ name, color: COLORS[name], sequence: i + 1 }))
+  ).returning('*');
+  const catMap = Object.fromEntries(cats.map(c => [c.name, c.id]));
 
-  // ─── PRODUCTS ─────────────────────────────────────────
-  const [
-    burger, pizza, pasta, sandwich, biryani,
-    coffee, tea, juice, coldcoffee, milkshake, water, lemonade,
-    brownie, icecream, cheesecake, gulabjamun,
-    fries, nachos, springrolls, momos
-  ] = await knex('products').insert([
-    { name: 'Burger', category_id: food.id, price: 120, tax_percent: 5, unit_of_measure: 'Piece', description: 'Juicy beef patty with lettuce and cheese' },
-    { name: 'Pizza', category_id: food.id, price: 250, tax_percent: 5, unit_of_measure: 'Piece', description: 'Wood fired thin crust pizza' },
-    { name: 'Pasta', category_id: food.id, price: 180, tax_percent: 5, unit_of_measure: 'Plate', description: 'Creamy white sauce penne pasta' },
-    { name: 'Sandwich', category_id: food.id, price: 90, tax_percent: 5, unit_of_measure: 'Piece', description: 'Grilled veggie sandwich' },
-    { name: 'Biryani', category_id: food.id, price: 220, tax_percent: 5, unit_of_measure: 'Plate', description: 'Fragrant basmati rice biryani' },
-    { name: 'Coffee', category_id: drinks.id, price: 80, tax_percent: 0, unit_of_measure: 'Cup', description: 'Freshly brewed arabica coffee' },
-    { name: 'Tea', category_id: drinks.id, price: 40, tax_percent: 0, unit_of_measure: 'Cup', description: 'Masala chai' },
-    { name: 'Fresh Juice', category_id: drinks.id, price: 100, tax_percent: 0, unit_of_measure: 'Glass', description: 'Seasonal fresh juice' },
-    { name: 'Cold Coffee', category_id: drinks.id, price: 120, tax_percent: 0, unit_of_measure: 'Glass', description: 'Chilled blended coffee' },
-    { name: 'Milkshake', category_id: drinks.id, price: 140, tax_percent: 0, unit_of_measure: 'Glass', description: 'Thick creamy milkshake' },
-    { name: 'Water', category_id: drinks.id, price: 20, tax_percent: 0, unit_of_measure: 'Bottle', description: 'Mineral water 500ml' },
-    { name: 'Lemonade', category_id: drinks.id, price: 60, tax_percent: 0, unit_of_measure: 'Glass', description: 'Fresh mint lemonade' },
-    { name: 'Brownie', category_id: dessert.id, price: 90, tax_percent: 0, unit_of_measure: 'Piece', description: 'Warm chocolate brownie' },
-    { name: 'Ice Cream', category_id: dessert.id, price: 70, tax_percent: 0, unit_of_measure: 'Scoop', description: '2 scoops of premium ice cream' },
-    { name: 'Cheesecake', category_id: dessert.id, price: 150, tax_percent: 0, unit_of_measure: 'Slice', description: 'New York style cheesecake' },
-    { name: 'Gulab Jamun', category_id: dessert.id, price: 60, tax_percent: 0, unit_of_measure: 'Plate', description: '4 pieces with sugar syrup' },
-    { name: 'French Fries', category_id: snacks.id, price: 80, tax_percent: 5, unit_of_measure: 'Plate', description: 'Crispy salted fries' },
-    { name: 'Nachos', category_id: snacks.id, price: 110, tax_percent: 5, unit_of_measure: 'Plate', description: 'Nachos with salsa and cheese dip' },
-    { name: 'Spring Rolls', category_id: snacks.id, price: 100, tax_percent: 5, unit_of_measure: 'Plate', description: '4 crispy veg spring rolls' },
-    { name: 'Momos', category_id: snacks.id, price: 90, tax_percent: 5, unit_of_measure: 'Plate', description: '6 steamed veg momos' },
-  ]).returning('*');
+  const prodRows = [];
+  for (const [cat, items] of Object.entries(PRODS))
+    for (const [name, price, tax] of items)
+      prodRows.push({ name, price, tax_percent: tax, category_id: catMap[cat], unit_of_measure: 'Unit', is_active: true, image_url: IMGS[cat] });
 
-  // ─── VARIANTS ─────────────────────────────────────────
-  await knex('product_variants').insert([
-    { product_id: pizza.id, attribute_name: 'Size', value: 'Small', unit: 'Inch', extra_price: 0 },
-    { product_id: pizza.id, attribute_name: 'Size', value: 'Medium', unit: 'Inch', extra_price: 80 },
-    { product_id: pizza.id, attribute_name: 'Size', value: 'Large', unit: 'Inch', extra_price: 150 },
-    { product_id: coffee.id, attribute_name: 'Size', value: 'Regular', unit: 'ml', extra_price: 0 },
-    { product_id: coffee.id, attribute_name: 'Size', value: 'Large', unit: 'ml', extra_price: 30 },
-    { product_id: icecream.id, attribute_name: 'Flavour', value: 'Chocolate', unit: '', extra_price: 0 },
-    { product_id: icecream.id, attribute_name: 'Flavour', value: 'Vanilla', unit: '', extra_price: 0 },
-    { product_id: icecream.id, attribute_name: 'Flavour', value: 'Strawberry', unit: '', extra_price: 10 },
-    { product_id: milkshake.id, attribute_name: 'Flavour', value: 'Chocolate', unit: '', extra_price: 0 },
-    { product_id: milkshake.id, attribute_name: 'Flavour', value: 'Strawberry', unit: '', extra_price: 20 },
-    { product_id: milkshake.id, attribute_name: 'Flavour', value: 'Mango', unit: '', extra_price: 20 },
-  ]);
+  const products = await knex('products').insert(prodRows).returning('*');
+  console.log(`   ✓ ${products.length} products`);
 
-  // ─── CUSTOMERS ────────────────────────────────────────
-  const [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14] = await knex('customers').insert([
-    { name: 'Aditya Mehta', email: 'aditya@gmail.com', phone: '9876501234', city: 'Ahmedabad', state: 'Gujarat', visit_count: 8, total_sales: 0 },
-    { name: 'Sneha Patel', email: 'sneha@gmail.com', phone: '9876502345', city: 'Gandhinagar', state: 'Gujarat', visit_count: 5, total_sales: 0 },
-    { name: 'Rohan Shah', email: 'rohan@gmail.com', phone: '9876503456', city: 'Surat', state: 'Gujarat', visit_count: 3, total_sales: 0 },
-    { name: 'Kavya Iyer', email: 'kavya@gmail.com', phone: '9876504567', city: 'Ahmedabad', state: 'Gujarat', visit_count: 12, total_sales: 0 },
-    { name: 'Aryan Joshi', email: 'aryan@gmail.com', phone: '9876505678', city: 'Vadodara', state: 'Gujarat', visit_count: 2, total_sales: 0 },
-    { name: 'Meera Nair', email: 'meera@gmail.com', phone: '9876506789', city: 'Ahmedabad', state: 'Gujarat', visit_count: 6, total_sales: 0 },
-    { name: 'Vikram Singh', phone: '9876507890', city: 'Rajkot', state: 'Gujarat', visit_count: 1, total_sales: 0 },
-    { name: 'Pooja Desai', phone: '9876508901', city: 'Ahmedabad', state: 'Gujarat', visit_count: 4, total_sales: 0 },
-    { name: 'Harsh Patel', email: 'harsh@gmail.com', phone: '9876509012', city: 'Surat', state: 'Gujarat', visit_count: 1, total_sales: 0 },
-    { name: 'Nisha Sharma', email: 'nisha@gmail.com', phone: '9876510123', city: 'Ahmedabad', state: 'Gujarat', visit_count: 1, total_sales: 0 },
-    { name: 'Karan Modi', phone: '9876511234', city: 'Gandhinagar', state: 'Gujarat', visit_count: 2, total_sales: 0 },
-    { name: 'Riya Gupta', email: 'riya@gmail.com', phone: '9876512345', city: 'Ahmedabad', state: 'Gujarat', visit_count: 1, total_sales: 0 },
-    { name: 'Dhruv Trivedi', phone: '9876513456', city: 'Vadodara', state: 'Gujarat', visit_count: 1, total_sales: 0 },
-    { name: 'Ananya Singh', email: 'ananya@gmail.com', phone: '9876514567', city: 'Ahmedabad', state: 'Gujarat', visit_count: 2, total_sales: 0 },
-  ]).returning('*');
+  // ── 6. 500 CUSTOMERS ──────────────────────────────────────────────
+  const custRows = Array.from({ length: 500 }, (_, i) => ({
+    name:        `${FIRST[i % FIRST.length]} ${LAST[Math.floor(i / FIRST.length) % LAST.length]}`,
+    phone:       `${rndInt(70000, 99999)}${rndInt(10000, 99999)}`,
+    city:        CITIES[i % CITIES.length],
+    state:       'Gujarat',
+    country:     'India',
+    visit_count: rndInt(1, 15),
+    last_visit:  new Date(Date.now() - rndInt(1, 180) * 86400000).toISOString(),
+  }));
+  const customers = await knex('customers').insert(custRows).returning('*');
+  const custIds   = customers.map(c => c.id);
+  console.log(`   ✓ ${customers.length} customers`);
 
-  // ─── HELPER FUNCTIONS ─────────────────────────────────
-  const daysAgo = (n, h = 10, m = 0) => {
-    const d = new Date();
-    d.setDate(d.getDate() - n);
-    d.setHours(h, m, 0, 0);
-    return d;
-  };
+  // ── 7. HISTORICAL SESSIONS — 6 months ────────────────────────────
+  const today   = new Date('2026-04-05T00:00:00.000Z');
+  const startDt = new Date('2025-10-05T00:00:00.000Z');
+  const custSales = new Map();
+  let totalOrders = 0;
 
-  const addLines = async (order_id, items) => {
-    let subtotal = 0, tax_amount = 0;
-    for (const { product, qty, notes } of items) {
-      const price = parseFloat(product.price);
-      const tax = parseFloat(product.tax_percent);
-      const lineSub = price * qty;
-      const lineTax = lineSub * tax / 100;
-      subtotal += lineSub;
-      tax_amount += lineTax;
-      await knex('order_lines').insert({
-        order_id,
-        product_id: product.id,
-        quantity: qty,
-        unit_price: price,
-        tax_percent: tax,
-        subtotal: lineSub.toFixed(2),
-        total: (lineSub + lineTax).toFixed(2),
-        notes: notes || null,
-      });
+  for (let d = new Date(startDt); d < today; d.setDate(d.getDate() + 1)) {
+    if (Math.random() < 0.27) continue;          // ~73% of days active
+    const ds   = d.toISOString().slice(0, 10);
+    const op   = rnd(staffPool);
+    const hh   = rndInt(8, 9).toString().padStart(2, '0');
+    const mm   = rndInt(0, 30).toString().padStart(2, '0');
+    const ch   = rndInt(21, 22).toString().padStart(2, '0');
+    const cm   = rndInt(0, 59).toString().padStart(2, '0');
+    const openedAt = new Date(`${ds}T${hh}:${mm}:00.000Z`);
+    const closedAt = new Date(`${ds}T${ch}:${cm}:00.000Z`);
+
+    const [sess] = await knex('sessions').insert({
+      pos_config_id: config.id, opened_by: op.id,
+      opened_at: openedAt.toISOString(), closed_at: closedAt.toISOString(),
+      opening_cash: rndInt(500, 2000), closing_cash: rndInt(3000, 9000),
+      status: 'closed',
+    }).returning('*');
+
+    const numOrders = rndInt(6, 14);
+    for (let o = 0; o < numOrders; o++) {
+      const custId = Math.random() < 0.40 ? rnd(custIds) : null;
+      const offsetMs = rndInt(20, 720) * 60000;
+      const oTime = new Date(Math.min(openedAt.getTime() + offsetMs, closedAt.getTime() - 60000));
+
+      const [order] = await knex('orders').insert({
+        session_id: sess.id, table_id: rnd(tableIds), customer_id: custId,
+        order_number: o + 1, status: 'paid', notes: rnd(NOTES),
+        created_by: rnd(staffPool).id, subtotal: 0, tax_amount: 0, total: 0,
+        created_at: oTime.toISOString(), updated_at: oTime.toISOString(),
+      }).returning('*');
+
+      const { lines, picked, orderTotal } = await buildOrder(knex, order.id, products, rndInt(2, 6));
+      if (custId) custSales.set(custId, (custSales.get(custId) || 0) + orderTotal);
+      await finaliseOrder(knex, order, lines, picked, orderTotal, Math.random() < 0.9 ? 'completed' : 'preparing');
+      totalOrders++;
     }
-    const total = subtotal + tax_amount;
-    await knex('orders').where({ id: order_id }).update({
-      subtotal: subtotal.toFixed(2),
-      tax_amount: tax_amount.toFixed(2),
-      total: total.toFixed(2),
+
+    // Staff payment per closed session
+    await knex('staff_payments').insert({
+      staff_id: op.id, session_id: sess.id, paid_by: admin.id,
+      amount: +(+op.hourly_rate * rndInt(6, 10)).toFixed(2),
+      note: 'Daily session payment', status: 'paid',
+      created_at: closedAt.toISOString(),
     });
-    return total;
-  };
+  }
+  console.log(`   ✓ ${totalOrders} historical orders`);
 
-  const payOrder = async (order_id, method, amount, customer_id) => {
-    const [pmt] = await knex('payments').insert({
-      order_id, method,
-      amount: amount.toFixed(2),
-      status: 'confirmed',
-      created_at: new Date(),
+  // Bulk-update customer total_sales
+  for (const [id, total] of custSales)
+    await knex('customers').where({ id }).update({ total_sales: total.toFixed(2) });
+
+  // ── 8. TODAY'S OPEN SESSION ───────────────────────────────────────
+  const [todaySess] = await knex('sessions').insert({
+    pos_config_id: config.id, opened_by: staff1.id,
+    opened_at: new Date('2026-04-05T09:00:00.000Z').toISOString(),
+    opening_cash: 1000, status: 'open',
+  }).returning('*');
+  await knex('pos_configs').where({ id: config.id }).update({ last_session_id: todaySess.id });
+
+  // 2 paid + 3 draft orders today
+  const todayDefs = [
+    { n: 1, status: 'paid',  tid: tableIds[0], notes: null             },
+    { n: 2, status: 'paid',  tid: tableIds[1], notes: 'Less spicy please' },
+    { n: 3, status: 'draft', tid: tableIds[2], notes: null             },
+    { n: 4, status: 'draft', tid: tableIds[3], notes: 'Extra cheese'   },
+    { n: 5, status: 'draft', tid: tableIds[4], notes: null             },
+  ];
+  for (const od of todayDefs) {
+    const [order] = await knex('orders').insert({
+      session_id: todaySess.id, table_id: od.tid, order_number: od.n,
+      status: od.status, notes: od.notes, created_by: staff1.id,
+      subtotal: 0, tax_amount: 0, total: 0,
     }).returning('*');
-    await knex('orders').where({ id: order_id }).update({ status: 'paid' });
-    if (customer_id) {
-      await knex('customers').where({ id: customer_id }).increment('total_sales', amount);
+    const { lines, picked, orderTotal } = await buildOrder(knex, order.id, products, rndInt(2, 4));
+
+    if (od.status === 'paid') {
+      await knex('payments').insert({ order_id: order.id, method: rnd(METHODS), amount: orderTotal, status: 'confirmed' });
+      const [t] = await knex('kitchen_tickets').insert({ order_id: order.id, status: 'completed', sent_at: new Date().toISOString(), completed_at: new Date().toISOString() }).returning('*');
+      await knex('kitchen_ticket_items').insert(lines.map((l, i) => ({ ticket_id: t.id, order_line_id: l.id, product_name: picked[i].name, quantity: l.quantity, is_prepared: true })));
+    } else {
+      const tickStat = rnd(['to_cook', 'preparing']);
+      const [t] = await knex('kitchen_tickets').insert({ order_id: order.id, status: tickStat, sent_at: new Date().toISOString() }).returning('*');
+      await knex('kitchen_ticket_items').insert(lines.map((l, i) => ({ ticket_id: t.id, order_line_id: l.id, product_name: picked[i].name, quantity: l.quantity, is_prepared: false })));
     }
-    return pmt;
-  };
-
-  const sendKitchen = async (order_id, session_id, status = 'completed') => {
-    const lines = await knex('order_lines')
-      .select('order_lines.*', 'products.name as product_name')
-      .leftJoin('products', 'order_lines.product_id', 'products.id')
-      .where({ order_id });
-    const [ticket] = await knex('kitchen_tickets').insert({
-      order_id, status,
-      sent_at: new Date(),
-      completed_at: status === 'completed' ? new Date() : null,
-    }).returning('*');
-    await knex('kitchen_ticket_items').insert(
-      lines.map(l => ({
-        ticket_id: ticket.id,
-        order_line_id: l.id,
-        product_name: l.product_name,
-        quantity: l.quantity,
-        is_prepared: status === 'completed',
-      }))
-    );
-    return ticket;
-  };
-
-  // ─── SESSION 1: 7 DAYS AGO — RAJ MORNING SHIFT ────────
-  const sess1Open = daysAgo(7, 9, 0);
-  const sess1Close = daysAgo(7, 15, 30);
-  const [sess1] = await knex('sessions').insert({
-    pos_config_id: config.id,
-    opened_by: staff1.id,
-    opened_at: sess1Open,
-    closed_at: sess1Close,
-    opening_cash: 500,
-    closing_cash: 3200,
-    status: 'closed',
-    created_at: sess1Open,
-    updated_at: sess1Close,
-  }).returning('*');
-
-  // Order 1 - Table G1 - Aditya - Cash
-  const [o1] = await knex('orders').insert({
-    session_id: sess1.id, table_id: tables[0].id, customer_id: c1.id,
-    order_number: 1, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id, created_at: daysAgo(7, 9, 15), updated_at: daysAgo(7, 9, 15),
-  }).returning('*');
-  const t1 = await addLines(o1.id, [
-    { product: burger, qty: 2, notes: 'Extra cheese' },
-    { product: coffee, qty: 2 },
-    { product: fries, qty: 1 },
-  ]);
-  await sendKitchen(o1.id, sess1.id);
-  await payOrder(o1.id, 'cash', t1, c1.id);
-
-  // Order 2 - Table G2 - Sneha - UPI
-  const [o2] = await knex('orders').insert({
-    session_id: sess1.id, table_id: tables[1].id, customer_id: c2.id,
-    order_number: 2, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id, created_at: daysAgo(7, 9, 45), updated_at: daysAgo(7, 9, 45),
-  }).returning('*');
-  const t2 = await addLines(o2.id, [
-    { product: pizza, qty: 1, notes: 'Less spicy' },
-    { product: pasta, qty: 1 },
-    { product: lemonade, qty: 2 },
-    { product: brownie, qty: 2 },
-  ]);
-  await sendKitchen(o2.id, sess1.id);
-  await payOrder(o2.id, 'upi', t2, c2.id);
-
-  // Order 3 - Table G3 - Walk-in - Digital
-  const [o3] = await knex('orders').insert({
-    session_id: sess1.id, table_id: tables[2].id,
-    order_number: 3, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id, created_at: daysAgo(7, 10, 30), updated_at: daysAgo(7, 10, 30),
-  }).returning('*');
-  const t3 = await addLines(o3.id, [
-    { product: biryani, qty: 2 },
-    { product: juice, qty: 2 },
-    { product: gulabjamun, qty: 1 },
-  ]);
-  await sendKitchen(o3.id, sess1.id);
-  await payOrder(o3.id, 'digital', t3, null);
-
-  // Order 4 - Table G4 - Rohan - Cash
-  const [o4] = await knex('orders').insert({
-    session_id: sess1.id, table_id: tables[3].id, customer_id: c3.id,
-    order_number: 4, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id, created_at: daysAgo(7, 11, 0), updated_at: daysAgo(7, 11, 0),
-  }).returning('*');
-  const t4 = await addLines(o4.id, [
-    { product: sandwich, qty: 3 },
-    { product: coldcoffee, qty: 3 },
-    { product: nachos, qty: 1 },
-  ]);
-  await sendKitchen(o4.id, sess1.id);
-  await payOrder(o4.id, 'cash', t4, c3.id);
-
-  // Order 5 - Self Order - Table G5 - Kavya
-  const [o5] = await knex('orders').insert({
-    session_id: sess1.id, table_id: tables[4].id, customer_id: c4.id,
-    order_number: 5, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    notes: 'Self ordered via QR',
-    created_by: staff1.id, created_at: daysAgo(7, 12, 0), updated_at: daysAgo(7, 12, 0),
-  }).returning('*');
-  const t5 = await addLines(o5.id, [
-    { product: pizza, qty: 2, notes: 'No onion' },
-    { product: milkshake, qty: 2 },
-    { product: cheesecake, qty: 1 },
-    { product: momos, qty: 1 },
-  ]);
-  await sendKitchen(o5.id, sess1.id);
-  await payOrder(o5.id, 'upi', t5, c4.id);
-
-  // Order 6 - Table F1 First Floor - Meera
-  const [o6] = await knex('orders').insert({
-    session_id: sess1.id, table_id: tables[5].id, customer_id: c6.id,
-    order_number: 6, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id, created_at: daysAgo(7, 13, 15), updated_at: daysAgo(7, 13, 15),
-  }).returning('*');
-  const t6 = await addLines(o6.id, [
-    { product: tea, qty: 4 },
-    { product: springrolls, qty: 2 },
-    { product: sandwich, qty: 2 },
-  ]);
-  await sendKitchen(o6.id, sess1.id);
-  await payOrder(o6.id, 'cash', t6, c6.id);
-
-  await knex('pos_configs').where({ id: config.id }).update({ last_session_id: sess1.id });
-
-  // ─── SESSION 2: 5 DAYS AGO — PRIYA EVENING SHIFT ──────
-  const sess2Open = daysAgo(5, 16, 0);
-  const sess2Close = daysAgo(5, 23, 0);
-  const [sess2] = await knex('sessions').insert({
-    pos_config_id: config.id,
-    opened_by: staff2.id,
-    opened_at: sess2Open,
-    closed_at: sess2Close,
-    opening_cash: 300,
-    closing_cash: 4500,
-    status: 'closed',
-    created_at: sess2Open,
-    updated_at: sess2Close,
-  }).returning('*');
-
-  const [o7] = await knex('orders').insert({
-    session_id: sess2.id, table_id: tables[1].id, customer_id: c4.id,
-    order_number: 1, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff2.id, created_at: daysAgo(5, 16, 30), updated_at: daysAgo(5, 16, 30),
-  }).returning('*');
-  const t7 = await addLines(o7.id, [
-    { product: burger, qty: 4, notes: 'Well done' },
-    { product: fries, qty: 4 },
-    { product: coldcoffee, qty: 4 },
-    { product: icecream, qty: 2 },
-  ]);
-  await sendKitchen(o7.id, sess2.id);
-  await payOrder(o7.id, 'digital', t7, c4.id);
-
-  const [o8] = await knex('orders').insert({
-    session_id: sess2.id, table_id: tables[2].id, customer_id: c1.id,
-    order_number: 2, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff2.id, created_at: daysAgo(5, 17, 0), updated_at: daysAgo(5, 17, 0),
-  }).returning('*');
-  const t8 = await addLines(o8.id, [
-    { product: pizza, qty: 2 },
-    { product: pasta, qty: 2 },
-    { product: juice, qty: 3 },
-    { product: brownie, qty: 3 },
-  ]);
-  await sendKitchen(o8.id, sess2.id);
-  await payOrder(o8.id, 'cash', t8, c1.id);
-
-  const [o9] = await knex('orders').insert({
-    session_id: sess2.id, table_id: tables[3].id, customer_id: c7.id,
-    order_number: 3, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    notes: 'Birthday table — add candle',
-    created_by: staff2.id, created_at: daysAgo(5, 18, 30), updated_at: daysAgo(5, 18, 30),
-  }).returning('*');
-  const t9 = await addLines(o9.id, [
-    { product: cheesecake, qty: 4 },
-    { product: milkshake, qty: 4 },
-    { product: pizza, qty: 2, notes: 'Birthday special' },
-    { product: springrolls, qty: 2 },
-  ]);
-  await sendKitchen(o9.id, sess2.id);
-  await payOrder(o9.id, 'upi', t9, c7.id);
-
-  const [o10] = await knex('orders').insert({
-    session_id: sess2.id, table_id: tables[6].id,
-    order_number: 4, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff2.id, created_at: daysAgo(5, 19, 0), updated_at: daysAgo(5, 19, 0),
-  }).returning('*');
-  const t10 = await addLines(o10.id, [
-    { product: biryani, qty: 3 },
-    { product: tea, qty: 3 },
-    { product: gulabjamun, qty: 2 },
-  ]);
-  await sendKitchen(o10.id, sess2.id);
-  await payOrder(o10.id, 'cash', t10, null);
-
-  const [o11] = await knex('orders').insert({
-    session_id: sess2.id, table_id: tables[4].id, customer_id: c8.id,
-    order_number: 5, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    notes: 'Self ordered via QR',
-    created_by: staff2.id, created_at: daysAgo(5, 20, 0), updated_at: daysAgo(5, 20, 0),
-  }).returning('*');
-  const t11 = await addLines(o11.id, [
-    { product: sandwich, qty: 2, notes: 'No mayo' },
-    { product: lemonade, qty: 2 },
-    { product: nachos, qty: 1 },
-    { product: icecream, qty: 2 },
-  ]);
-  await sendKitchen(o11.id, sess2.id);
-  await payOrder(o11.id, 'upi', t11, c8.id);
-
-  const [o12] = await knex('orders').insert({
-    session_id: sess2.id, table_id: tables[0].id, customer_id: c5.id,
-    order_number: 6, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff2.id, created_at: daysAgo(5, 21, 30), updated_at: daysAgo(5, 21, 30),
-  }).returning('*');
-  const t12 = await addLines(o12.id, [
-    { product: momos, qty: 2 },
-    { product: coldcoffee, qty: 2 },
-    { product: brownie, qty: 1 },
-  ]);
-  await sendKitchen(o12.id, sess2.id);
-  await payOrder(o12.id, 'digital', t12, c5.id);
-
-  // ─── SESSION 3: 3 DAYS AGO — RAJ FULL DAY ─────────────
-  const sess3Open = daysAgo(3, 8, 0);
-  const sess3Close = daysAgo(3, 22, 0);
-  const [sess3] = await knex('sessions').insert({
-    pos_config_id: config.id,
-    opened_by: staff1.id,
-    opened_at: sess3Open,
-    closed_at: sess3Close,
-    opening_cash: 1000,
-    closing_cash: 6800,
-    status: 'closed',
-    created_at: sess3Open,
-    updated_at: sess3Close,
-  }).returning('*');
-
-  const sess3Orders = [
-    { table: tables[0], customer: c2, items: [{ product: coffee, qty: 2 }, { product: sandwich, qty: 2 }], method: 'cash', time: daysAgo(3, 8, 30) },
-    { table: tables[1], customer: c3, items: [{ product: burger, qty: 3 }, { product: fries, qty: 3 }, { product: milkshake, qty: 3 }], method: 'upi', time: daysAgo(3, 9, 0) },
-    { table: tables[2], customer: null, items: [{ product: tea, qty: 5 }, { product: momos, qty: 2 }, { product: nachos, qty: 1 }], method: 'cash', time: daysAgo(3, 10, 0) },
-    { table: tables[3], customer: c1, items: [{ product: biryani, qty: 2, notes: 'Extra raita' }, { product: juice, qty: 2 }, { product: gulabjamun, qty: 1 }], method: 'digital', time: daysAgo(3, 11, 30) },
-    { table: tables[4], customer: c4, items: [{ product: pizza, qty: 3, notes: 'Self order - extra cheese' }, { product: pasta, qty: 2 }, { product: cheesecake, qty: 2 }], method: 'upi', time: daysAgo(3, 12, 0), notes: 'Self ordered via QR' },
-    { table: tables[5], customer: c6, items: [{ product: coldcoffee, qty: 4 }, { product: brownie, qty: 4 }, { product: springrolls, qty: 2 }], method: 'cash', time: daysAgo(3, 13, 0) },
-    { table: tables[6], customer: c8, items: [{ product: burger, qty: 2 }, { product: lemonade, qty: 2 }, { product: icecream, qty: 2 }], method: 'digital', time: daysAgo(3, 14, 30) },
-    { table: tables[7], customer: null, items: [{ product: sandwich, qty: 4 }, { product: juice, qty: 4 }, { product: nachos, qty: 2 }], method: 'cash', time: daysAgo(3, 16, 0) },
-    { table: tables[0], customer: c5, items: [{ product: pizza, qty: 1 }, { product: pasta, qty: 1 }, { product: coffee, qty: 2 }], method: 'upi', time: daysAgo(3, 17, 30) },
-    { table: tables[1], customer: c7, items: [{ product: biryani, qty: 4 }, { product: tea, qty: 4 }, { product: gulabjamun, qty: 2 }, { product: icecream, qty: 4 }], method: 'cash', time: daysAgo(3, 19, 0) },
-  ];
-
-  for (let i = 0; i < sess3Orders.length; i++) {
-    const { table, customer, items, method, time, notes } = sess3Orders[i];
-    const [ord] = await knex('orders').insert({
-      session_id: sess3.id,
-      table_id: table.id,
-      customer_id: customer?.id || null,
-      order_number: i + 1,
-      status: 'draft',
-      subtotal: 0, tax_amount: 0, total: 0,
-      notes: notes || null,
-      created_by: staff1.id,
-      created_at: time, updated_at: time,
-    }).returning('*');
-    const total = await addLines(ord.id, items);
-    await sendKitchen(ord.id, sess3.id);
-    await payOrder(ord.id, method, total, customer?.id || null);
   }
 
-  // ─── SESSION 4: YESTERDAY — PRIYA ─────────────────────
-  const sess4Open = daysAgo(1, 10, 0);
-  const sess4Close = daysAgo(1, 21, 0);
-  const [sess4] = await knex('sessions').insert({
-    pos_config_id: config.id,
-    opened_by: staff2.id,
-    opened_at: sess4Open,
-    closed_at: sess4Close,
-    opening_cash: 500,
-    closing_cash: 5100,
-    status: 'closed',
-    created_at: sess4Open,
-    updated_at: sess4Close,
-  }).returning('*');
-
-  const sess4Orders = [
-    { table: tables[0], customer: c1, items: [{ product: coffee, qty: 2, notes: 'Less sugar' }, { product: cheesecake, qty: 2 }], method: 'upi', time: daysAgo(1, 10, 30) },
-    { table: tables[2], customer: c3, items: [{ product: burger, qty: 2 }, { product: coldcoffee, qty: 2 }, { product: fries, qty: 2 }], method: 'cash', time: daysAgo(1, 11, 0) },
-    { table: tables[3], customer: c4, items: [{ product: pizza, qty: 2, notes: 'Self ordered - no mushroom' }, { product: milkshake, qty: 2 }, { product: brownie, qty: 2 }], method: 'upi', time: daysAgo(1, 12, 30), notes: 'Self ordered via QR' },
-    { table: tables[4], customer: null, items: [{ product: biryani, qty: 6 }, { product: juice, qty: 6 }, { product: gulabjamun, qty: 3 }], method: 'digital', time: daysAgo(1, 13, 0) },
-    { table: tables[5], customer: c6, items: [{ product: sandwich, qty: 2 }, { product: tea, qty: 4 }, { product: springrolls, qty: 2 }, { product: momos, qty: 2 }], method: 'cash', time: daysAgo(1, 14, 0) },
-    { table: tables[6], customer: c2, items: [{ product: pasta, qty: 3 }, { product: lemonade, qty: 3 }, { product: icecream, qty: 3 }], method: 'digital', time: daysAgo(1, 16, 0) },
-    { table: tables[7], customer: c8, items: [{ product: nachos, qty: 2 }, { product: coldcoffee, qty: 2 }, { product: cheesecake, qty: 1 }], method: 'upi', time: daysAgo(1, 18, 0) },
-    { table: tables[1], customer: c7, items: [{ product: burger, qty: 5 }, { product: fries, qty: 5 }, { product: milkshake, qty: 5 }, { product: brownie, qty: 3 }], method: 'cash', time: daysAgo(1, 19, 30) },
-  ];
-
-  for (let i = 0; i < sess4Orders.length; i++) {
-    const { table, customer, items, method, time, notes } = sess4Orders[i];
-    const [ord] = await knex('orders').insert({
-      session_id: sess4.id,
-      table_id: table.id,
-      customer_id: customer?.id || null,
-      order_number: i + 1,
-      status: 'draft',
-      subtotal: 0, tax_amount: 0, total: 0,
-      notes: notes || null,
-      created_by: staff2.id,
-      created_at: time, updated_at: time,
-    }).returning('*');
-    const total = await addLines(ord.id, items);
-    await sendKitchen(ord.id, sess4.id);
-    await payOrder(ord.id, method, total, customer?.id || null);
-  }
-
-  // ─── SESSION 5: TODAY — ACTIVE SESSION ────────────────
-  const sess5Open = new Date();
-  sess5Open.setHours(9, 0, 0, 0);
-  const [sess5] = await knex('sessions').insert({
-    pos_config_id: config.id,
-    opened_by: staff1.id,
-    opened_at: sess5Open,
-    opening_cash: 1000,
-    status: 'open',
-    created_at: sess5Open,
-    updated_at: sess5Open,
-  }).returning('*');
-
-  // Today's orders
-  const now = new Date();
-  const [todayO1] = await knex('orders').insert({
-    session_id: sess5.id, table_id: tables[0].id, customer_id: c1.id,
-    order_number: 1, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id,
-    created_at: new Date(now.getTime() - 90 * 60000),
-    updated_at: new Date(now.getTime() - 90 * 60000),
-  }).returning('*');
-  const tt1 = await addLines(todayO1.id, [
-    { product: coffee, qty: 2 },
-    { product: sandwich, qty: 2, notes: 'Toasted' },
-    { product: brownie, qty: 2 },
-  ]);
-  await sendKitchen(todayO1.id, sess5.id);
-  await payOrder(todayO1.id, 'cash', tt1, c1.id);
-
-  const [todayO2] = await knex('orders').insert({
-    session_id: sess5.id, table_id: tables[1].id, customer_id: c4.id,
-    order_number: 2, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    notes: 'Self ordered via QR',
-    created_by: staff1.id,
-    created_at: new Date(now.getTime() - 60 * 60000),
-    updated_at: new Date(now.getTime() - 60 * 60000),
-  }).returning('*');
-  const tt2 = await addLines(todayO2.id, [
-    { product: pizza, qty: 1, notes: 'Extra cheese please' },
-    { product: pasta, qty: 1 },
-    { product: lemonade, qty: 2 },
-    { product: cheesecake, qty: 1 },
-  ]);
-  await sendKitchen(todayO2.id, sess5.id);
-  await payOrder(todayO2.id, 'upi', tt2, c4.id);
-
-  const [todayO3] = await knex('orders').insert({
-    session_id: sess5.id, table_id: tables[2].id,
-    order_number: 3, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id,
-    created_at: new Date(now.getTime() - 30 * 60000),
-    updated_at: new Date(now.getTime() - 30 * 60000),
-  }).returning('*');
-  const tt3 = await addLines(todayO3.id, [
-    { product: biryani, qty: 2 },
-    { product: juice, qty: 2 },
-  ]);
-  await sendKitchen(todayO3.id, sess5.id, 'preparing');
-  await payOrder(todayO3.id, 'digital', tt3, null);
-
-  // Active draft order — not paid yet
-  const [todayO4] = await knex('orders').insert({
-    session_id: sess5.id, table_id: tables[3].id, customer_id: c6.id,
-    order_number: 4, status: 'draft', subtotal: 0, tax_amount: 0, total: 0,
-    created_by: staff1.id,
-    created_at: new Date(now.getTime() - 10 * 60000),
-    updated_at: new Date(now.getTime() - 10 * 60000),
-  }).returning('*');
-  await addLines(todayO4.id, [
-    { product: burger, qty: 2, notes: 'Make it spicy' },
-    { product: coldcoffee, qty: 2 },
-    { product: fries, qty: 1 },
-  ]);
-  await sendKitchen(todayO4.id, sess5.id, 'to_cook');
-
-  await knex('pos_configs').where({ id: config.id }).update({ last_session_id: sess5.id });
-
-  // ─── STAFF PAYMENTS ───────────────────────────────────
-  await knex('staff_payments').insert([
-    { staff_id: staff1.id, session_id: sess1.id, paid_by: admin.id, amount: 520, note: 'Shift payment - 6.5 hrs @ ₹80', status: 'paid', created_at: sess1Close },
-    { staff_id: staff2.id, session_id: sess2.id, paid_by: admin.id, amount: 560, note: 'Shift payment - 7 hrs @ ₹80', status: 'paid', created_at: sess2Close },
-    { staff_id: staff1.id, session_id: sess3.id, paid_by: admin.id, amount: 1120, note: 'Full day shift - 14 hrs @ ₹80', status: 'paid', created_at: sess3Close },
-    { staff_id: staff2.id, session_id: sess4.id, paid_by: admin.id, amount: 880, note: 'Shift payment - 11 hrs @ ₹80', status: 'paid', created_at: sess4Close },
-  ]);
-
-  console.log('✅ Seed complete:');
-  console.log('   4 users (admin, 2 staff, 1 kitchen)');
-  console.log('   2 floors, 8 tables');
-  console.log('   4 categories, 20 products, 11 variants');
-  console.log('   8 customers');
-  console.log('   5 sessions (4 closed, 1 open today)');
-  console.log('   35+ orders across 7 days');
-  console.log('   All with kitchen tickets and payments');
+  console.log(`\n✅ Seed complete!`);
+  console.log(`   Products  : ${products.length}`);
+  console.log(`   Customers : ${customers.length}`);
+  console.log(`   Today session ID : ${todaySess.id}  (status: open)`);
+  console.log(`\n   Demo logins:`);
+  console.log(`   admin@pos-cafe.com  / Admin@1234`);
+  console.log(`   raj@pos-cafe.com    / Staff@1234`);
+  console.log(`   arjun@pos-cafe.com  / Kitchen@1234`);
 };

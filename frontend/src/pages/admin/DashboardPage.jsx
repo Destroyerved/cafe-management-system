@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { usePosStore } from '../../store/posStore';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import styles from './Dashboard.module.css';
@@ -27,11 +28,13 @@ const NAV = [
 
 export default function DashboardPage() {
     const { user, clearAuth } = useAuthStore();
+    const { clearPos } = usePosStore();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
         try { await api.post('/auth/logout'); } catch { }
         clearAuth();
+        clearPos();          // clear stale session/pos config so PosSelect starts fresh
         navigate('/login');
         toast.success('Logged out');
     };

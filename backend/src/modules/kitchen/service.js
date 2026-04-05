@@ -55,6 +55,7 @@ const sendToKitchen = async (order_id, io) => {
   // Emit to kitchen room
   if (io) {
     io.to(`kitchen_${order.session_id}`).emit('new_ticket', fullTicket);
+    io.to('kitchen_global').emit('new_ticket', fullTicket);
   }
 
   return fullTicket;
@@ -92,6 +93,7 @@ const updateTicketStatus = async (ticket_id, status, io) => {
 
   if (io) {
     io.to(`kitchen_${order.session_id}`).emit('ticket_updated', updated);
+    io.to('kitchen_global').emit('ticket_updated', updated);
   }
 
   return updated;
@@ -116,6 +118,7 @@ const markItemPrepared = async (item_id, io) => {
 
   if (io) {
     io.to(`kitchen_${order.session_id}`).emit('item_prepared', updated);
+    io.to('kitchen_global').emit('item_prepared', updated);
   }
 
   return updated;
@@ -133,7 +136,7 @@ const listTickets = async ({ session_id, status } = {}) => {
     .leftJoin('tables', 'orders.table_id', 'tables.id')
     .orderBy('kitchen_tickets.sent_at', 'asc');
 
-  if (session_id) query.where('orders.session_id', session_id);
+  if (session_id && session_id !== 'global') query.where('orders.session_id', session_id);
   if (status) query.where('kitchen_tickets.status', status);
 
   const tickets = await query;

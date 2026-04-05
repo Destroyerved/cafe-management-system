@@ -54,8 +54,13 @@ app.use('/api/customer-auth', require('./modules/customer-auth/routes'));
 io.on('connection', (socket) => {
   logger.info(`Socket connected: ${socket.id}`);
   socket.on('join_kitchen', (sessionId) => {
-    socket.join(`kitchen_${sessionId}`);
-    logger.info(`Socket ${socket.id} joined kitchen_${sessionId}`);
+    if (sessionId === 'global') {
+      socket.join('kitchen_global');
+      logger.info(`Socket ${socket.id} joined kitchen_global`);
+    } else {
+      socket.join(`kitchen_${sessionId}`);
+      logger.info(`Socket ${socket.id} joined kitchen_${sessionId}`);
+    }
   });
   socket.on('disconnect', () => {
     logger.info(`Socket disconnected: ${socket.id}`);

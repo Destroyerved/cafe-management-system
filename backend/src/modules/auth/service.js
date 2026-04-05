@@ -6,7 +6,7 @@ const signAccessToken = (user) =>
   jwt.sign(
     { id: user.id, email: user.email, role: user.role, name: user.name },
     process.env.JWT_ACCESS_SECRET,
-    { expiresIn: process.env.JWT_ACCESS_EXPIRES || '15m' }
+    { expiresIn: process.env.JWT_ACCESS_EXPIRES || '12h' }
   );
 
 const signRefreshToken = (user) =>

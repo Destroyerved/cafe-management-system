@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePosStore } from '../../store/posStore';
@@ -14,7 +14,7 @@ export default function POSTerminal() {
   const { user } = useAuthStore();
   const { activeSession, activePosConfig, activeTable, currentOrder, setSession, setPosConfig, setTable, setCurrentOrder, clearPos } = usePosStore();
 
-  const [tab, setTab] = useState('floor'); // floor | register
+  const [tab, setTab] = useState('floor');
   const [activeCat, setActiveCat] = useState('all');
   const [search, setSearch] = useState('');
   const [showPayment, setShowPayment] = useState(false);
@@ -26,7 +26,6 @@ export default function POSTerminal() {
   const [successAmount, setSuccessAmount] = useState(0);
   const [kitchenSent, setKitchenSent] = useState(false);
 
-  // Load config + session on mount
   const { data: config } = useQuery({
     queryKey: ['pos-config', config_id],
     queryFn: () => api.get(`/pos-configs/${config_id}`).then(r => r.data.data),
@@ -65,7 +64,6 @@ export default function POSTerminal() {
     enabled: !!currentOrder?.id,
   });
 
-  // Get occupied tables
   const { data: allOrders } = useQuery({
     queryKey: ['session-orders', activeSession?.id],
     queryFn: () => api.get('/orders', { params: { session_id: activeSession?.id, status: 'draft', limit: 100 } }).then(r => r.data.data),
@@ -73,9 +71,8 @@ export default function POSTerminal() {
     refetchInterval: 10000,
   });
 
-  const occupiedTableIds = new Set(allOrders?.map(o => o.table_id).filter(Boolean) || []);
+  const occupiedTableIds = new Set((allOrders?.data || []).map(o => o.table_id).filter(Boolean));
 
-  // Mutations
   const createOrder = useMutation({
     mutationFn: ({ session_id, table_id }) => api.post('/orders', { session_id, table_id }),
     onSuccess: (res) => {
@@ -87,35 +84,28 @@ export default function POSTerminal() {
   });
 
   const addLine = useMutation({
-    mutationFn: ({ order_id, product_id, quantity }) =>
-      api.post(`/orders/${order_id}/lines`, { product_id, quantity }),
+    mutationFn: ({ order_id, product_id, quantity }) => api.post(`/orders/${order_id}/lines`, { product_id, quantity }),
     onSuccess: () => refetchOrder(),
   });
 
   const updateLine = useMutation({
-    mutationFn: ({ order_id, line_id, quantity }) =>
-      api.put(`/orders/${order_id}/lines/${line_id}`, { quantity }),
+    mutationFn: ({ order_id, line_id, quantity }) => api.put(`/orders/${order_id}/lines/${line_id}`, { quantity }),
     onSuccess: () => refetchOrder(),
   });
 
   const removeLine = useMutation({
-    mutationFn: ({ order_id, line_id }) =>
-      api.delete(`/orders/${order_id}/lines/${line_id}`),
+    mutationFn: ({ order_id, line_id }) => api.delete(`/orders/${order_id}/lines/${line_id}`),
     onSuccess: () => refetchOrder(),
   });
 
   const sendKitchen = useMutation({
     mutationFn: (order_id) => api.post(`/kitchen/send/${order_id}`),
-    onSuccess: () => {
-      toast.success('Sent to kitchen!');
-      setKitchenSent(true);
-    },
+    onSuccess: () => { toast.success('Sent to kitchen!'); setKitchenSent(true); },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
 
   const createPayment = useMutation({
-    mutationFn: ({ order_id, method, amount }) =>
-      api.post('/payments', { order_id, method, amount }),
+    mutationFn: ({ order_id, method, amount }) => api.post('/payments', { order_id, method, amount }),
     onSuccess: async (res) => {
       const payment = res.data.data;
       setPendingPaymentId(payment.id);
@@ -152,25 +142,21 @@ export default function POSTerminal() {
 
   const closeSession = useMutation({
     mutationFn: () => api.post(`/sessions/${activeSession?.id}/close`, { closing_cash: 0 }),
-    onSuccess: () => {
-      clearPos();
-      toast.success('Session closed');
-      navigate('/pos-select');
-    },
+    onSuccess: () => { clearPos(); toast.success('Session closed'); navigate('/pos-select'); },
   });
 
-  // Handlers
   const handleTableClick = (table) => {
     if (!table.active) return;
     setTable(table);
-    if (activeSession) {
-      const existingOrder = allOrders?.find(o => o.table_id === table.id);
+    const currentSession = session || activeSession;
+    if (currentSession) {
+      const existingOrder = allOrders?.data?.find(o => o.table_id === table.id);
       if (existingOrder) {
         setCurrentOrder(existingOrder);
         setTab('register');
         toast.success(`Resumed Order #${existingOrder.order_number}`);
       } else {
-        createOrder.mutate({ session_id: activeSession.id, table_id: table.id });
+        createOrder.mutate({ session_id: currentSession.id, table_id: table.id });
       }
     }
   };
@@ -181,19 +167,10 @@ export default function POSTerminal() {
     addLine.mutate({ order_id: currentOrder.id, product_id: product.id, quantity: 1 });
   };
 
-  const handlePay = () => {
-    if (!orderDetail?.lines?.length) { toast.error('Add items first'); return; }
-    if (!payMethod) { toast.error('Select payment method'); return; }
-    createPayment.mutate({
-      order_id: currentOrder.id,
-      method: payMethod,
-      amount: parseFloat(orderDetail.total),
-    });
-  };
+  const productList = Array.isArray(products) ? products : (products?.data || []);
 
-  // Filter products
-  const filteredProducts = products?.filter(p => {
-    const matchCat = activeCat === 'all' || p.category_id === activeCat;
+  const filteredProducts = productList.filter(p => {
+    const matchCat = activeCat === 'all' || p.category_id === Number(activeCat);
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
@@ -203,7 +180,6 @@ export default function POSTerminal() {
 
   return (
     <div className={styles.terminal}>
-      {/* TOP NAV */}
       <nav className={styles.terminalNav}>
         <div className={styles.terminalNavLeft}>
           <div className={styles.terminalLogo}>C</div>
@@ -217,42 +193,32 @@ export default function POSTerminal() {
             </button>
           </div>
         </div>
-
         <div className={styles.terminalNavRight}>
           {currentSession && (
             <span style={{ fontSize: 9, fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              ● Session Active
+              Session Active
             </span>
           )}
-          <button className={styles.terminalBtn} onClick={() => navigate('/dashboard')}>
-            Dashboard
-          </button>
+          <button className={styles.terminalBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button className={[styles.terminalBtn, styles.terminalBtnDanger].join(' ')} onClick={() => closeSession.mutate()}>
             Close Register
           </button>
         </div>
       </nav>
 
-      {/* FLOOR VIEW */}
       {tab === 'floor' && (
         <div className={styles.floorView}>
-          <div className={styles.floorTitle}>
-            Select a table to start or resume an order
-          </div>
-          {floors?.map(floor => (
+          <div className={styles.floorTitle}>Select a table to start or resume an order</div>
+          {(Array.isArray(floors) ? floors : floors?.data || [])?.map(floor => (
             <div key={floor.id} className={styles.floorSection}>
               <div className={styles.floorName}>{floor.name}</div>
               <div className={styles.tableGrid}>
-                {tables?.filter(t => t.floor_id === floor.id).map(table => {
+                {(Array.isArray(tables) ? tables : tables?.data || [])?.filter(t => t.floor_id === floor.id).map(table => {
                   const occupied = occupiedTableIds.has(table.id);
                   return (
                     <div
                       key={table.id}
-                      className={[
-                        styles.tableCard,
-                        occupied ? styles.tableCardOccupied : '',
-                        !table.active ? styles.tableCardInactive : '',
-                      ].join(' ')}
+                      className={[styles.tableCard, occupied ? styles.tableCardOccupied : '', !table.active ? styles.tableCardInactive : ''].join(' ')}
                       onClick={() => handleTableClick(table)}
                     >
                       <div className={styles.tableNum}>T{table.table_number}</div>
@@ -269,42 +235,24 @@ export default function POSTerminal() {
         </div>
       )}
 
-      {/* REGISTER VIEW */}
       {tab === 'register' && (
         <div className={styles.orderScreen}>
-          {/* LEFT — PRODUCTS */}
           <div className={styles.productPanel}>
-            {/* CATEGORY TABS */}
             <div className={styles.categoryTabs}>
-              <button
-                className={[styles.categoryTab, activeCat === 'all' ? styles.categoryTabActive : ''].join(' ')}
-                onClick={() => setActiveCat('all')}
-              >
+              <button className={[styles.categoryTab, activeCat === 'all' ? styles.categoryTabActive : ''].join(' ')} onClick={() => setActiveCat('all')}>
                 All
               </button>
-              {categories?.map(c => (
-                <button
-                  key={c.id}
-                  className={[styles.categoryTab, activeCat === c.id ? styles.categoryTabActive : ''].join(' ')}
-                  onClick={() => setActiveCat(c.id)}
-                  style={activeCat === c.id ? {} : {}}
-                >
+              {(Array.isArray(categories) ? categories : categories?.data || [])?.map(c => (
+                <button key={c.id} className={[styles.categoryTab, activeCat === c.id ? styles.categoryTabActive : ''].join(' ')} onClick={() => setActiveCat(c.id)}>
                   {c.name}
                 </button>
               ))}
             </div>
 
-            {/* SEARCH */}
             <div className={styles.productSearch}>
-              <input
-                className={styles.productSearchInput}
-                placeholder="Search menu..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
+              <input className={styles.productSearchInput} placeholder="Search menu..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
 
-            {/* PRODUCT GRID */}
             <div className={styles.productGrid}>
               {filteredProducts?.map(p => (
                 <div
@@ -312,13 +260,15 @@ export default function POSTerminal() {
                   className={[styles.productCard, !p.is_active ? styles.productCardInactive : ''].join(' ')}
                   onClick={() => handleProductClick(p)}
                 >
+                  {p.image_url && (
+                    <div style={{ height: 80, overflow: 'hidden', margin: '-14px -10px 10px', borderBottom: '2px solid #000' }}>
+                      <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.parentNode.style.display = 'none'} />
+                    </div>
+                  )}
                   <div className={styles.productCardName}>{p.name}</div>
                   <div className={styles.productCardPrice}>₹{parseFloat(p.price).toFixed(0)}</div>
                   <div className={styles.productCardTax}>{p.tax_percent}% tax</div>
-                  <span
-                    className={styles.productCardCat}
-                    style={{ background: p.category_color || '#f1f5f9' }}
-                  >
+                  <span className={styles.productCardCat} style={{ background: p.category_color || '#f1f5f9' }}>
                     {p.category_name}
                   </span>
                 </div>
@@ -326,17 +276,10 @@ export default function POSTerminal() {
             </div>
           </div>
 
-          {/* RIGHT — CART */}
           <div className={styles.cartPanel}>
             <div className={styles.cartHeader}>
-              <span className={styles.cartTitle}>
-                Order {currentOrder ? `#${currentOrder.order_number}` : ''}
-              </span>
-              {activeTable && (
-                <span className={styles.cartTableBadge}>
-                  Table {activeTable.table_number}
-                </span>
-              )}
+              <span className={styles.cartTitle}>Order {currentOrder ? `#${currentOrder.order_number}` : ''}</span>
+              {activeTable && <span className={styles.cartTableBadge}>Table {activeTable.table_number}</span>}
             </div>
 
             <div className={styles.cartItems}>
@@ -354,25 +297,12 @@ export default function POSTerminal() {
                       {line.notes && <div className={styles.cartItemNote}>{line.notes}</div>}
                     </div>
                     <div className={styles.cartItemQty}>
-                      <button
-                        className={styles.qtyBtn}
-                        onClick={() => {
-                          if (parseInt(line.quantity) <= 1) {
-                            removeLine.mutate({ order_id: currentOrder.id, line_id: line.id });
-                          } else {
-                            updateLine.mutate({ order_id: currentOrder.id, line_id: line.id, quantity: parseInt(line.quantity) - 1 });
-                          }
-                        }}
-                      >
-                        −
-                      </button>
+                      <button className={styles.qtyBtn} onClick={() => {
+                        if (parseInt(line.quantity) <= 1) removeLine.mutate({ order_id: currentOrder.id, line_id: line.id });
+                        else updateLine.mutate({ order_id: currentOrder.id, line_id: line.id, quantity: parseInt(line.quantity) - 1 });
+                      }}>−</button>
                       <span className={styles.qtyNum}>{Math.floor(line.quantity)}</span>
-                      <button
-                        className={styles.qtyBtn}
-                        onClick={() => updateLine.mutate({ order_id: currentOrder.id, line_id: line.id, quantity: parseInt(line.quantity) + 1 })}
-                      >
-                        +
-                      </button>
+                      <button className={styles.qtyBtn} onClick={() => updateLine.mutate({ order_id: currentOrder.id, line_id: line.id, quantity: parseInt(line.quantity) + 1 })}>+</button>
                     </div>
                     <div className={styles.cartItemTotal}>₹{parseFloat(line.total).toFixed(0)}</div>
                   </div>
@@ -382,23 +312,13 @@ export default function POSTerminal() {
 
             <div className={styles.cartFooter}>
               <div className={styles.cartTotals}>
-                <div className={styles.cartTotalRow}>
-                  <span>Subtotal</span>
-                  <span>₹{parseFloat(orderDetail?.subtotal || 0).toFixed(2)}</span>
-                </div>
-                <div className={styles.cartTotalRow}>
-                  <span>Tax</span>
-                  <span>₹{parseFloat(orderDetail?.tax_amount || 0).toFixed(2)}</span>
-                </div>
-                <div className={styles.cartTotalFinal}>
-                  <span>Total</span>
-                  <span>₹{parseFloat(orderDetail?.total || 0).toFixed(2)}</span>
-                </div>
+                <div className={styles.cartTotalRow}><span>Subtotal</span><span>₹{parseFloat(orderDetail?.subtotal || 0).toFixed(2)}</span></div>
+                <div className={styles.cartTotalRow}><span>Tax</span><span>₹{parseFloat(orderDetail?.tax_amount || 0).toFixed(2)}</span></div>
+                <div className={styles.cartTotalFinal}><span>Total</span><span>₹{parseFloat(orderDetail?.total || 0).toFixed(2)}</span></div>
               </div>
-
               <div className={styles.cartActions}>
                 {kitchenSent ? (
-                  <div className={styles.sentBadge}>✓ Sent to Kitchen</div>
+                  <div className={styles.sentBadge}>Sent to Kitchen</div>
                 ) : (
                   <button
                     className={[styles.cartBtn, styles.cartBtnSend, lines.length === 0 ? styles.cartBtnDisabled : ''].join(' ')}
@@ -421,7 +341,6 @@ export default function POSTerminal() {
         </div>
       )}
 
-      {/* PAYMENT MODAL */}
       {showPayment && !showUpiQr && (
         <div className={styles.paymentOverlay} onClick={() => setShowPayment(false)}>
           <div className={styles.paymentModal} onClick={e => e.stopPropagation()}>
@@ -434,42 +353,31 @@ export default function POSTerminal() {
                 <div className={styles.paymentAmountLabel}>Amount Due</div>
                 <div className={styles.paymentAmountValue}>₹{parseFloat(orderDetail?.total || 0).toFixed(0)}</div>
               </div>
-
               <div className={styles.paymentMethods}>
                 {config?.enable_cash && (
-                  <button
-                    className={[styles.paymentMethod, payMethod === 'cash' ? styles.paymentMethodActive : ''].join(' ')}
-                    onClick={() => setPayMethod('cash')}
-                  >
+                  <button className={[styles.paymentMethod, payMethod === 'cash' ? styles.paymentMethodActive : ''].join(' ')} onClick={() => setPayMethod('cash')}>
                     <div className={styles.paymentMethodIcon}>💵</div>
                     <div className={styles.paymentMethodLabel}>Cash</div>
                   </button>
                 )}
                 {config?.enable_digital && (
-                  <button
-                    className={[styles.paymentMethod, payMethod === 'digital' ? styles.paymentMethodActive : ''].join(' ')}
-                    onClick={() => setPayMethod('digital')}
-                  >
+                  <button className={[styles.paymentMethod, payMethod === 'digital' ? styles.paymentMethodActive : ''].join(' ')} onClick={() => setPayMethod('digital')}>
                     <div className={styles.paymentMethodIcon}>💳</div>
                     <div className={styles.paymentMethodLabel}>Card</div>
                   </button>
                 )}
                 {config?.enable_upi && (
-                  <button
-                    className={[styles.paymentMethod, payMethod === 'upi' ? styles.paymentMethodActive : ''].join(' ')}
-                    onClick={() => setPayMethod('upi')}
-                  >
+                  <button className={[styles.paymentMethod, payMethod === 'upi' ? styles.paymentMethodActive : ''].join(' ')} onClick={() => setPayMethod('upi')}>
                     <div className={styles.paymentMethodIcon}>📱</div>
                     <div className={styles.paymentMethodLabel}>UPI</div>
                   </button>
                 )}
               </div>
-
-              <button
-                className={styles.paymentConfirmBtn}
-                onClick={handlePay}
-                disabled={!payMethod || createPayment.isPending}
-              >
+              <button className={styles.paymentConfirmBtn} onClick={() => {
+                if (!payMethod) { toast.error('Select payment method'); return; }
+                if (!orderDetail?.lines?.length) { toast.error('Add items first'); return; }
+                createPayment.mutate({ order_id: currentOrder.id, method: payMethod, amount: parseFloat(orderDetail.total) });
+              }} disabled={!payMethod || createPayment.isPending}>
                 {createPayment.isPending ? 'Processing...' : `Confirm ${payMethod ? payMethod.toUpperCase() : ''} Payment`}
               </button>
             </div>
@@ -477,7 +385,6 @@ export default function POSTerminal() {
         </div>
       )}
 
-      {/* UPI QR MODAL */}
       {showUpiQr && upiQr && (
         <div className={styles.paymentOverlay}>
           <div className={styles.paymentModal}>
@@ -488,22 +395,11 @@ export default function POSTerminal() {
               <div className={styles.upiQr}>
                 <img src={upiQr.qr} alt="UPI QR" className={styles.upiQrImage} />
                 <div className={styles.upiQrId}>UPI: {upiQr.upi_id}</div>
-                <div className={styles.paymentAmountValue} style={{ fontSize: 32, marginBottom: 20 }}>
-                  ₹{parseFloat(upiQr.amount).toFixed(0)}
-                </div>
+                <div className={styles.paymentAmountValue} style={{ fontSize: 32, marginBottom: 20 }}>₹{parseFloat(upiQr.amount).toFixed(0)}</div>
                 <div className={styles.upiQrBtns}>
-                  <button
-                    className={[styles.cartBtn, styles.cartBtnSend].join(' ')}
-                    onClick={() => { setShowUpiQr(false); setShowPayment(false); setPendingPaymentId(null); }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className={[styles.cartBtn, styles.cartBtnPay].join(' ')}
-                    onClick={() => validatePayment.mutate(pendingPaymentId)}
-                    disabled={validatePayment.isPending}
-                  >
-                    {validatePayment.isPending ? 'Confirming...' : 'Confirmed ✓'}
+                  <button className={[styles.cartBtn, styles.cartBtnSend].join(' ')} onClick={() => { setShowUpiQr(false); setShowPayment(false); setPendingPaymentId(null); }}>Cancel</button>
+                  <button className={[styles.cartBtn, styles.cartBtnPay].join(' ')} onClick={() => validatePayment.mutate(pendingPaymentId)} disabled={validatePayment.isPending}>
+                    {validatePayment.isPending ? 'Confirming...' : 'Confirmed'}
                   </button>
                 </div>
               </div>
@@ -512,7 +408,6 @@ export default function POSTerminal() {
         </div>
       )}
 
-      {/* SUCCESS SCREEN */}
       {showSuccess && (
         <div className={styles.successOverlay} onClick={() => { setShowSuccess(false); setTab('floor'); }}>
           <div className={styles.successIcon}>✓</div>

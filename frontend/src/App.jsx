@@ -10,6 +10,7 @@ import POSTerminal from './pages/pos/POSTerminal';
 import PosSelect from './pages/pos/PosSelect';
 import KitchenDisplay from './pages/kitchen/KitchenDisplay';
 import KitchenSelect from './pages/kitchen/KitchenSelect';
+import SelfOrderRouter from './pages/self-order/SelfOrderRouter';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/pos-select" element={<ProtectedRoute><PosSelect /></ProtectedRoute>} />
           <Route path="/kitchen/:session_id" element={<ProtectedRoute><KitchenDisplay /></ProtectedRoute>} />
           <Route path="/kitchen-select" element={<ProtectedRoute><KitchenSelect /></ProtectedRoute>} />
+          <Route path="/s/:token" element={<SelfOrderRouter />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" />

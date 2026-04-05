@@ -108,8 +108,29 @@ const setCustomer = async (order_id, customer_id) => {
   return order;
 };
 
-const list = async ({ session_id, status, search, page = 1, limit = 20 } = {}) => {
-  const query = db('orders')
+const list = async ({ session_id, status, search, page = 1, limit = 30 } = {}) => {
+  page  = parseInt(page);
+  limit = parseInt(limit);
+
+  const applyFilters = (q) => {
+    if (session_id) q.where('orders.session_id', session_id);
+    if (status)     q.where('orders.status', status);
+    if (search)     q.whereIlike('orders.order_number::text', `%${search}%`);
+    return q;
+  };
+
+  const baseCount = db('orders')
+    .leftJoin('customers', 'orders.customer_id', 'customers.id')
+    .leftJoin('tables',    'orders.table_id',    'tables.id')
+    .leftJoin('sessions',  'orders.session_id',  'sessions.id')
+    .leftJoin('users',     'orders.created_by',  'users.id');
+
+  const [{ count }] = await applyFilters(baseCount.clone()).count('orders.id as count');
+  const total  = parseInt(count);
+  const pages  = Math.ceil(total / limit) || 1;
+  const offset = (page - 1) * limit;
+
+  const data = await applyFilters(baseCount.clone())
     .select(
       'orders.*',
       'customers.name as customer_name',
@@ -117,19 +138,17 @@ const list = async ({ session_id, status, search, page = 1, limit = 20 } = {}) =
       'sessions.opened_at as session_opened_at',
       'users.name as created_by_name'
     )
-    .leftJoin('customers', 'orders.customer_id', 'customers.id')
-    .leftJoin('tables', 'orders.table_id', 'tables.id')
-    .leftJoin('sessions', 'orders.session_id', 'sessions.id')
-    .leftJoin('users', 'orders.created_by', 'users.id')
     .orderBy('orders.created_at', 'desc')
     .limit(limit)
-    .offset((page - 1) * limit);
+    .offset(offset);
 
-  if (session_id) query.where('orders.session_id', session_id);
-  if (status) query.where('orders.status', status);
-  if (search) query.whereIlike('orders.order_number::text', `%${search}%`);
+  const from = total > 0 ? offset + 1 : 0;
+  const to   = Math.min(offset + data.length, total);
 
-  return query;
+  return {
+    data,
+    meta: { total, page, limit, pages, showing: `${from}–${to} of ${total}` },
+  };
 };
 
 const getById = async (id) => {
