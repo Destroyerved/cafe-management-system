@@ -2,11 +2,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { useThemeStore } from '../../store/themeStore';
 import styles from './Navbar.module.css';
+
 
 export default function Navbar({ links = [] }) {
   const { user, clearAuth } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
+
 
   const handleLogout = async () => {
     try {
@@ -28,9 +32,13 @@ export default function Navbar({ links = [] }) {
         </div>
       </div>
       <div className={styles.right}>
+        <button className={styles.themeToggle} onClick={toggleTheme} title="Toggle Theme">
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
         <span className={styles.user}>{user?.name}</span>
         <button className={styles.logout} onClick={handleLogout}>Logout</button>
       </div>
+
     </nav>
   );
 }

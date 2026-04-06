@@ -16,7 +16,6 @@ const recalcOrder = async (order_id, trx) => {
 
 const create = async ({ session_id, table_id, created_by }) => {
   const maxResult = await db('orders')
-    .where({ session_id })
     .max('order_number as max')
     .first();
   const order_number = (maxResult.max || 0) + 1;
@@ -115,7 +114,7 @@ const list = async ({ session_id, status, search, page = 1, limit = 30 } = {}) =
   const applyFilters = (q) => {
     if (session_id) q.where('orders.session_id', session_id);
     if (status)     q.where('orders.status', status);
-    if (search)     q.whereIlike('orders.order_number::text', `%${search}%`);
+    if (search)     q.whereRaw('orders.order_number::text ILIKE ?', [`%${search}%`]);
     return q;
   };
 

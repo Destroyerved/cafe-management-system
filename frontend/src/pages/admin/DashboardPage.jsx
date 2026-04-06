@@ -4,7 +4,9 @@ import { useAuthStore } from '../../store/authStore';
 import { usePosStore } from '../../store/posStore';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import styles from './Dashboard.module.css';
+
 
 import Overview from './pages/Overview';
 import Products from './pages/Products';
@@ -63,12 +65,14 @@ export default function DashboardPage() {
                 </nav>
 
                 <div className={styles.headerRight}>
+                    <ThemeToggle />
                     <div className={styles.userBadge}>
                         <div className={styles.userAvatar}>
                             {user?.name?.[0]?.toUpperCase()}
                         </div>
                         <span className={styles.userName}>{user?.name}</span>
                     </div>
+
                     <button className={styles.logoutBtn} onClick={handleLogout}>
                         Logout
                     </button>

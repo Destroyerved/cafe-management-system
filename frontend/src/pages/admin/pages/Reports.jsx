@@ -15,20 +15,49 @@ const HOURS = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
 
 export default function Reports() {
   const [period, setPeriod] = useState('weekly');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  const { data: dash } = useQuery({ queryKey: ['dashboard', period], queryFn: () => api.get(`/reports/dashboard?period=${period}`).then(r => r.data.data) });
-  const { data: chart } = useQuery({ queryKey: ['sales-chart', period], queryFn: () => api.get(`/reports/sales-chart?period=${period}`).then(r => r.data.data) });
-  const { data: topProducts } = useQuery({ queryKey: ['top-products', period], queryFn: () => api.get(`/reports/top-products?period=${period}`).then(r => r.data.data) });
+  const qOpts = { period, start_date: startDate || undefined, end_date: endDate || undefined };
+
+  const { data: dash } = useQuery({ queryKey: ['dashboard', period, startDate, endDate], queryFn: () => api.get(`/reports/dashboard`, { params: qOpts }).then(r => r.data.data) });
+  const { data: chart } = useQuery({ queryKey: ['sales-chart', period, startDate, endDate], queryFn: () => api.get(`/reports/sales-chart`, { params: qOpts }).then(r => r.data.data) });
+  const { data: topProducts } = useQuery({ queryKey: ['top-products', period, startDate, endDate], queryFn: () => api.get(`/reports/top-products`, { params: qOpts }).then(r => r.data.data) });
   const { data: topCategories } = useQuery({ 
-  queryKey: ['top-categories', period], 
-  queryFn: () => api.get(`/reports/top-categories?period=yearly`).then(r => r.data.data) 
-});
-  const { data: topOrders } = useQuery({ queryKey: ['top-orders', period], queryFn: () => api.get(`/reports/top-orders?period=${period}`).then(r => r.data.data) });
+    queryKey: ['top-categories', period, startDate, endDate], 
+    queryFn: () => api.get(`/reports/top-categories`, { params: qOpts }).then(r => r.data.data.map(d => ({ ...d, revenue: parseFloat(d.revenue) }))) 
+  });
+  const { data: topOrders } = useQuery({ queryKey: ['top-orders', period, startDate, endDate], queryFn: () => api.get(`/reports/top-orders`, { params: qOpts }).then(r => r.data.data) });
   const { data: payments } = useQuery({ queryKey: ['payments'], queryFn: () => api.get('/payments').then(r => r.data.data) });
   const { data: heatmap } = useQuery({ queryKey: ['heatmap'], queryFn: () => api.get('/reports/hourly-heatmap').then(r => r.data.data) });
   const { data: retention } = useQuery({ queryKey: ['retention'], queryFn: () => api.get('/reports/customer-retention').then(r => r.data.data) });
   const { data: staffPerf } = useQuery({ queryKey: ['staff-perf'], queryFn: () => api.get('/reports/staff-performance').then(r => r.data.data) });
   const { data: tableRev } = useQuery({ queryKey: ['table-rev'], queryFn: () => api.get('/reports/table-revenue').then(r => r.data.data) });
+
+  const handleExport = () => {
+    let csv = `Report Period: ${period.toUpperCase()}\n\n`;
+    csv += `Total Orders, ${dash?.total_orders || 0}\nTotal Revenue, ${dash?.revenue || 0}\nAvg Order Value, ${dash?.avg_order || 0}\n\n`;
+    
+    if (topProducts?.length) {
+      csv += `--- Top Products ---\nProduct,Qty,Revenue\n`;
+      topProducts.forEach(p => csv += `"${p.product}",${p.qty},${p.revenue}\n`);
+      csv += `\n`;
+    }
+    
+    if (topOrders?.length) {
+      csv += `--- Top Orders ---\nOrder Number,Table,Staff,Total\n`;
+      topOrders.forEach(o => csv += `"${o.order_number}","${o.table_number || ''}","${o.employee}",${o.total}\n`);
+      csv += `\n`;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cafe_report_${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Build heatmap grid
   const getHeat = (day, hour) => {
@@ -53,10 +82,22 @@ export default function Reports() {
           <div className={styles.pageTitle}>Reports</div>
           <div className={styles.pageSub}>Sales analytics and insights</div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {PERIODS.map(p => (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }} className="print-hide">
+          {period === 'custom' && (
+            <div style={{ display: 'flex', gap: 4, marginRight: 8 }}>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ padding: '4px 8px', fontSize: 11, border: '2px solid var(--border-medium)', background: 'var(--surface)', color: 'var(--text-primary)' }} />
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ padding: '4px 8px', fontSize: 11, border: '2px solid var(--border-medium)', background: 'var(--surface)', color: 'var(--text-primary)' }} />
+            </div>
+          )}
+          <button onClick={handleExport} className={styles.actionBtn} style={{ background: '#000', color: '#fff', border: '2px solid #000', padding: '6px 14px', fontSize: 10, boxShadow: '2px 2px 0 0 #000' }}>
+            CSV
+          </button>
+          <button onClick={() => window.print()} className={styles.actionBtn} style={{ background: '#f59e0b', color: '#000', border: '2px solid #000', padding: '6px 14px', fontSize: 10, marginRight: 8, boxShadow: '2px 2px 0 0 #000' }}>
+            PDF Print
+          </button>
+          {[...PERIODS, 'custom'].map(p => (
             <button key={p} onClick={() => setPeriod(p)} className={styles.actionBtn}
-              style={{ background: period === p ? '#facc15' : '#fff', color: '#000', border: '2px solid #000', padding: '6px 14px', fontSize: 10, boxShadow: period === p ? '2px 2px 0 0 #000' : 'none' }}>
+              style={{ background: period === p ? '#facc15' : 'var(--surface)', color: period === p ? '#000' : 'var(--text-primary)', border: '2px solid var(--border-medium)', padding: '6px 14px', fontSize: 10, boxShadow: period === p ? '2px 2px 0 0 var(--border-medium)' : 'none' }}>
               {p.toUpperCase()}
             </button>
           ))}
@@ -64,11 +105,13 @@ export default function Reports() {
       </div>
 
       {/* KPI ROW */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
           { label: 'Total Orders', value: dash?.total_orders ?? '—', color: '#facc15' },
-          { label: 'Total Revenue', value: `₹${dash?.revenue ?? '—'}`, color: '#16a34a' },
-          { label: 'Avg Order Value', value: `₹${dash?.avg_order ?? '—'}`, color: '#2563eb' },
+          { label: 'Gross Sales', value: `₹${dash?.gross ?? '—'}`, color: '#16a34a' },
+          { label: 'GST Collected', value: `₹${dash?.tax ?? '—'}`, color: '#ef4444' },
+          { label: 'Total Revenue', value: `₹${dash?.revenue ?? '—'}`, color: '#2563eb' },
+          { label: 'Avg Order Value', value: `₹${dash?.avg_order ?? '—'}`, color: '#8b5cf6' },
         ].map(k => (
           <div key={k.label} className={styles.kpiCard} style={{ borderLeft: `6px solid ${k.color}` }}>
             <div className={styles.kpiLabel}>{k.label}</div>

@@ -129,12 +129,14 @@ export default function PosSelect() {
           </div>
         )}
 
-        <button
-          className={styles.backBtn}
-          onClick={() => navigate('/dashboard')}
-        >
-          ← Back to Dashboard
-        </button>
+        {user?.role === 'admin' && (
+          <button
+            className={styles.backBtn}
+            onClick={() => navigate('/dashboard')}
+          >
+            ← Back to Dashboard
+          </button>
+        )}
         <button
           className={styles.backBtn}
           onClick={handleLogout}

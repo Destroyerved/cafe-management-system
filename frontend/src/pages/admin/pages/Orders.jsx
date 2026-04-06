@@ -82,10 +82,9 @@ export default function Orders() {
               onClick={() => handleStatus(s)}
               className={styles.actionBtn}
               style={{
-                background: status === s ? '#facc15' : '#fff',
-                color: '#000', border: '2px solid #000',
+                background: status === s ? '#facc15' : 'var(--surface)', color: status === s ? '#000' : 'var(--text-primary)', border: '2px solid var(--border-medium)',
                 padding: '6px 16px', fontSize: 10,
-                boxShadow: status === s ? '2px 2px 0 0 #000' : '3px 3px 0 0 #000',
+                boxShadow: status === s ? '2px 2px 0 0 var(--border-medium)' : '3px 3px 0 0 var(--border-medium)',
               }}
             >
               {s === '' ? 'ALL' : s.toUpperCase()}
@@ -198,7 +197,7 @@ export default function Orders() {
                   ['Time',     fmtTime(detail.created_at)],
                   ['Status',   detail.status.toUpperCase()],
                 ].map(([label, value]) => (
-                  <div key={label} style={{ background: '#f8fafc', border: '2px solid #000', padding: '10px 14px' }}>
+                  <div key={label} style={{ background: 'var(--surface-alt)', border: '2px solid var(--border-medium)', padding: '10px 14px' }}>
                     <div style={{ fontSize: 9, fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
                     <div style={{ fontSize: 13, fontWeight: 700 }}>{value}</div>
                   </div>
@@ -206,7 +205,7 @@ export default function Orders() {
               </div>
 
               {detail.notes && (
-                <div style={{ background: '#fef3c7', border: '2px solid #d97706', padding: '10px 14px', marginBottom: 16, fontSize: 12, fontWeight: 600 }}>
+                <div style={{ background: '#fef3c7', border: '2px solid #d97706', padding: '10px 14px', marginBottom: 16, fontSize: 12, fontWeight: 600, color: '#000' }}>
                   📝 {detail.notes}
                 </div>
               )}
@@ -240,7 +239,7 @@ export default function Orders() {
 
               {/* Totals */}
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <div style={{ border: '4px solid #000', padding: '16px 24px', boxShadow: '4px 4px 0 0 #000', minWidth: 250 }}>
+                <div style={{ border: '4px solid var(--border-medium)', padding: '16px 24px', boxShadow: '4px 4px 0 0 var(--border-medium)', minWidth: 250 }}>
                   {[
                     ['Subtotal', `₹${parseFloat(detail.subtotal).toFixed(2)}`],
                     ['Tax',      `₹${parseFloat(detail.tax_amount).toFixed(2)}`],
@@ -250,7 +249,7 @@ export default function Orders() {
                       <span>{v}</span>
                     </div>
                   ))}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 900, borderTop: '3px solid #000', paddingTop: 10, marginTop: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 900, borderTop: '3px solid var(--border-medium)', paddingTop: 10, marginTop: 6 }}>
                     <span>TOTAL</span>
                     <span>₹{parseFloat(detail.total).toFixed(2)}</span>
                   </div>

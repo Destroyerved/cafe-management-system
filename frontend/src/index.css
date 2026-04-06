@@ -1,58 +1,104 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
 
 :root {
-  --black: #000000;
-  --white: #ffffff;
-  --yellow: #facc15;
-  --yellow-light: #fef08a;
+  /* ─── SURFACES ─────────────────────────────── */
   --bg: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-muted: #64748b;
-  --text-secondary: #1e293b;
-  --border-heavy: 4px solid #000000;
-  --border-medium: 2px solid #000000;
-  --shadow-card: 6px 6px 0 0 #000000;
-  --shadow-card-hover: 8px 8px 0 0 #000000;
-  --shadow-button: 4px 4px 0 0 #000000;
-  --shadow-button-hover: 2px 2px 0 0 #000000;
-  --shadow-input: 4px 4px 0 0 #000000;
-  --shadow-input-focus: 6px 6px 0 0 #facc15;
-  --radius-none: 0px;
-  --radius-full: 9999px;
-  --transition: all 200ms ease-in-out;
+  --bg-dots: #e2e8f0;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --surface-hover: #fafafa;
+  --surface-highlight: #fef9c3;
 
-  /* Category colors */
+  /* ─── TEXT ──────────────────────────────────── */
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+  --text-on-dark: #ffffff;
+  --text-on-accent: #000000;
+
+  /* ─── BORDERS & SHADOWS ────────────────────── */
+  --border-strong: #000000;
+  --border-medium: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-color: #000000;
+
+  /* ─── ACCENT ───────────────────────────────── */
+  --accent: #facc15;
+  --accent-light: #fef08a;
+  --accent-bg: #fef9c3;
+
+  /* ─── STATUS ───────────────────────────────── */
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --red-dark: #7f1d1d;
+  --amber: #d97706;
+  --amber-light: #fef3c7;
+  --blue: #2563eb;
+  --blue-light: #dbeafe;
+
+  /* ─── CATEGORY ─────────────────────────────── */
   --color-fun: #22c55e;
   --color-drinks: #3b82f6;
   --color-dessert: #ec4899;
   --color-food: #f97316;
   --color-useful: #a855f7;
 
-  /* Status colors */
-  --green: #16a34a;
-  --green-light: #dcfce7;
-  --red: #dc2626;
-  --red-light: #fee2e2;
-  --amber: #d97706;
-  --amber-light: #fef3c7;
-  --blue: #2563eb;
-  --blue-light: #dbeafe;
+  /* ─── SHORTCUTS (composites) ───────────────── */
+  --border-heavy: 4px solid var(--border-strong);
+  --border-med: 2px solid var(--border-strong);
+  --border-thin: 1px solid var(--border-medium);
+  --shadow-card: 6px 6px 0 0 var(--shadow-color);
+  --shadow-card-hover: 8px 8px 0 0 var(--shadow-color);
+  --shadow-button: 4px 4px 0 0 var(--shadow-color);
+  --shadow-button-sm: 3px 3px 0 0 var(--shadow-color);
+  --shadow-button-hover: 2px 2px 0 0 var(--shadow-color);
+  --shadow-input: 4px 4px 0 0 var(--shadow-color);
+  --shadow-input-focus: 6px 6px 0 0 var(--accent);
 
-  /* Legacy vars for compatibility */
-  --off-white: #f1f5f9;
-  --cream: #f8fafc;
-  --border: #e2e8f0;
-  --border-dark: #cbd5e1;
-  --text-muted: #64748b;
-  --shadow-sm: 2px 2px 0 0 #000;
-  --shadow-md: 4px 4px 0 0 #000;
-  --shadow-lg: 6px 6px 0 0 #000;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  /* ─── TRANSITIONS ──────────────────────────── */
+  --transition: all 200ms ease-in-out;
+  --transition-fast: all 150ms ease;
 }
 
+/* ══════════════════════════════════════════════
+   DARK THEME
+   ══════════════════════════════════════════════ */
+[data-theme='dark'] {
+  --bg: #0c1222;
+  --bg-dots: #1e293b;
+  --surface: #1e293b;
+  --surface-alt: #172033;
+  --surface-hover: #263249;
+  --surface-highlight: #3b2f0a;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --text-on-dark: #0f172a;
+  --text-on-accent: #000000;
+
+  --border-strong: #94a3b8;
+  --border-medium: #334155;
+  --border-light: #1e293b;
+  --shadow-color: rgba(148, 163, 184, 0.35);
+
+  --accent: #facc15;
+  --accent-light: #422006;
+  --accent-bg: #3b2f0a;
+
+  --green-light: #052e16;
+  --red-light: #450a0a;
+  --amber-light: #451a03;
+  --blue-light: #172554;
+}
+
+/* ══════════════════════════════════════════════
+   RESET & BASE
+   ══════════════════════════════════════════════ */
 *,
 *::before,
 *::after {
@@ -69,10 +115,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-h3,
-h4 {
+h1, h2, h3, h4 {
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.025em;
@@ -84,24 +127,12 @@ button {
   font-family: inherit;
 }
 
-input,
-select,
-textarea {
+input, select, textarea {
   font-family: inherit;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: #000;
-}
-
-a {
-  color: inherit;
-}
+a { color: inherit; }

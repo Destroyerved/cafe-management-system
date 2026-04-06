@@ -1,8 +1,8 @@
 /* Kitchen Display — neo-brutalist */
 .page {
   min-height: 100vh;
-  background: #f1f5f9;
-  background-image: radial-gradient(circle, #e2e8f0 1.5px, transparent 1.5px);
+  background: var(--bg);
+  background-image: radial-gradient(circle, var(--bg-dots) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
   display: flex;
   flex-direction: column;
@@ -15,8 +15,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: #000000;
-  border-bottom: 4px solid #000000;
+  background: var(--surface);
+  border-bottom: 4px solid var(--border-strong);
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -30,21 +30,21 @@
 .logo {
   width: 38px;
   height: 38px;
-  background: #facc15;
-  border: 3px solid #facc15;
+  background: var(--accent);
+  border: 3px solid var(--border-strong);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   font-weight: 900;
-  color: #000;
+  color: var(--text-on-accent);
   flex-shrink: 0;
 }
 
 .title {
   font-size: 18px;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: -0.02em;
 }
@@ -52,11 +52,11 @@
 .sessionBadge {
   font-size: 10px;
   font-weight: 900;
-  color: #facc15;
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: rgba(250,204,21,0.15);
-  border: 2px solid #facc15;
+  background: var(--accent-bg);
+  border: 2px solid var(--accent);
   padding: 3px 10px;
   border-radius: 9999px;
 }
@@ -70,9 +70,9 @@
 
 .filterBtn {
   padding: 8px 14px;
-  background: #1e293b;
-  color: #94a3b8;
-  border: 2px solid #334155;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border: 2px solid var(--border-medium);
   border-radius: 0;
   font-size: 10px;
   font-weight: 900;
@@ -82,15 +82,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all 150ms;
+  transition: var(--transition-fast);
   font-family: 'Inter', sans-serif;
 }
 
 .filterBtn:hover,
 .filterBtnActive {
-  background: #facc15 !important;
-  color: #000000 !important;
-  border-color: #facc15 !important;
+  background: var(--accent) !important;
+  color: var(--text-on-accent) !important;
+  border-color: var(--accent) !important;
 }
 
 .filter_to_cook { border-color: #f59e0b; }
@@ -112,8 +112,8 @@
 .backBtn {
   padding: 8px 16px;
   background: transparent;
-  color: #94a3b8;
-  border: 2px solid #475569;
+  color: var(--text-muted);
+  border: 2px solid var(--border-medium);
   border-radius: 0;
   font-size: 10px;
   font-weight: 900;
@@ -122,19 +122,18 @@
   cursor: pointer;
   margin-left: 8px;
   font-family: 'Inter', sans-serif;
-  transition: all 150ms;
+  transition: var(--transition-fast);
 }
 
 .backBtn:hover {
-  color: #ffffff;
-  border-color: #94a3b8;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 /* Board */
 .board {
   flex: 1;
   display: grid;
-  gap: 0;
   align-items: start;
   padding: 20px;
   gap: 16px;
@@ -147,7 +146,7 @@
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -164,27 +163,27 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border: 4px solid #000000;
-  box-shadow: 4px 4px 0 0 #000000;
+  border: 4px solid var(--border-strong);
+  box-shadow: 4px 4px 0 0 var(--shadow-color);
 }
 
-.colHeader_to_cook    { background: #ffffff;  }
-.colHeader_preparing  { background: #fef3c7;  }
-.colHeader_completed  { background: #dcfce7;  }
+.colHeader_to_cook    { background: var(--surface); }
+.colHeader_preparing  { background: var(--amber-light); }
+.colHeader_completed  { background: var(--green-light); }
 
 .colTitle {
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #000000;
+  color: var(--text-primary);
 }
 
 .colCount {
   width: 28px;
   height: 28px;
-  background: #000000;
-  color: #ffffff;
+  background: var(--border-strong);
+  color: var(--text-on-dark);
   border-radius: 9999px;
   display: flex;
   align-items: center;
@@ -203,18 +202,18 @@
 
 /* Column body background tints */
 .ticketList_to_cook   { background: transparent; }
-.ticketList_preparing { background: rgba(254,243,199,0.25); border-radius: 4px; }
-.ticketList_completed { background: rgba(220,252,231,0.25); border-radius: 4px; }
+.ticketList_preparing { background: rgba(254,243,199,0.15); border-radius: 4px; }
+.ticketList_completed { background: rgba(220,252,231,0.15); border-radius: 4px; }
 
 .emptyCol {
   padding: 24px;
   text-align: center;
   font-size: 10px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border: 3px dashed #cbd5e1;
+  border: 3px dashed var(--border-medium);
 }
 
 /* Slide-in from top for new tickets */
@@ -231,25 +230,35 @@
 .clock {
   font-size: 13px;
   font-weight: 700;
-  color: #facc15;
+  color: var(--accent);
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
 }
 
 /* Ticket Card */
 .ticketCard {
-  background: #ffffff;
-  border: 4px solid #000000;
-  box-shadow: 4px 4px 0 0 #000000;
+  background: var(--surface);
+  border: 4px solid var(--border-strong);
+  box-shadow: 4px 4px 0 0 var(--shadow-color);
   padding: 14px;
   cursor: pointer;
-  transition: all 150ms;
+  transition: var(--transition-fast);
 }
 
 .ticketCard:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 0 #000000;
+  box-shadow: 6px 6px 0 0 var(--shadow-color);
 }
+
+.urgencyGreen { background: #f0fdf4 !important; border-color: #22c55e !important; }
+.urgencyYellow { background: #fefce8 !important; border-color: #facc15 !important; }
+
+@keyframes flashRed {
+  0% { background: #fef2f2; border-color: #ef4444; }
+  50% { background: #fee2e2; border-color: #dc2626; box-shadow: 0 0 10px #ef4444; }
+  100% { background: #fef2f2; border-color: #ef4444; }
+}
+.urgencyRed { animation: flashRed 1.5s infinite; border-left: 10px solid #ef4444 !important; }
 
 .ticket_to_cook { border-left: 6px solid #f59e0b; }
 .ticket_preparing { border-left: 6px solid #3b82f6; }
@@ -261,7 +270,7 @@
 
 .ticket_completed:hover {
   transform: none;
-  box-shadow: 4px 4px 0 0 #000000;
+  box-shadow: 4px 4px 0 0 var(--shadow-color);
 }
 
 .ticketTop {
@@ -274,15 +283,15 @@
 .ticketOrder {
   font-size: 16px;
   font-weight: 900;
-  color: #000000;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
 .ticketTable {
   font-size: 10px;
   font-weight: 900;
-  color: #ffffff;
-  background: #000000;
+  color: var(--text-on-dark);
+  background: var(--border-strong);
   padding: 3px 8px;
   border-radius: 9999px;
   text-transform: uppercase;
@@ -292,7 +301,7 @@
 .ticketTime {
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-muted);
   margin-left: auto;
 }
 
@@ -308,55 +317,55 @@
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
+  background: var(--surface-alt);
+  border: 2px solid var(--border-medium);
   cursor: pointer;
   transition: all 120ms;
 }
 
 .ticketItem:hover {
-  background: #fef9c3;
-  border-color: #fbbf24;
+  background: var(--accent-bg);
+  border-color: var(--accent);
 }
 
 .ticketItemDone {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background: var(--green-light);
+  border-color: var(--green);
   opacity: 0.6;
 }
 
 .ticketItemDone .ticketItemName {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .ticketItemQty {
   font-size: 13px;
   font-weight: 900;
-  color: #000000;
+  color: var(--text-primary);
   min-width: 24px;
 }
 
 .ticketItemName {
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
   flex: 1;
 }
 
 .ticketItemCheck {
   font-size: 12px;
-  color: #16a34a;
+  color: var(--green);
   font-weight: 900;
 }
 
 .ticketAction {
   font-size: 9px;
   font-weight: 900;
-  color: #64748b;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-align: right;
   padding-top: 8px;
-  border-top: 2px dashed #e2e8f0;
+  border-top: 2px dashed var(--border-medium);
 }

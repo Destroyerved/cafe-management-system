@@ -5,7 +5,9 @@ import { usePosStore } from '../../store/posStore';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import styles from './POS.module.css';
+
 
 export default function POSTerminal() {
   const { config_id } = useParams();
@@ -25,6 +27,8 @@ export default function POSTerminal() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successAmount, setSuccessAmount] = useState(0);
   const [kitchenSent, setKitchenSent] = useState(false);
+  const [showCustomer, setShowCustomer] = useState(false);
+  const [custSearch, setCustSearch] = useState('');
 
   const { data: config } = useQuery({
     queryKey: ['pos-config', config_id],
@@ -102,6 +106,18 @@ export default function POSTerminal() {
     mutationFn: (order_id) => api.post(`/kitchen/send/${order_id}`),
     onSuccess: () => { toast.success('Sent to kitchen!'); setKitchenSent(true); },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
+  });
+
+  const setOrderCustomer = useMutation({
+    mutationFn: (customer_id) => api.patch(`/orders/${currentOrder.id}/customer`, { customer_id }),
+    onSuccess: () => { toast.success('Customer assigned'); setShowCustomer(false); refetchOrder(); },
+    onError: (e) => toast.error('Failed to assign customer')
+  });
+
+  const searchCustomers = useQuery({
+    queryKey: ['pos-customers', custSearch],
+    queryFn: () => api.get('/customers', { params: { search: custSearch || undefined, limit: 10 } }).then(r => r.data.data),
+    enabled: showCustomer
   });
 
   const createPayment = useMutation({
@@ -199,7 +215,11 @@ export default function POSTerminal() {
               Session Active
             </span>
           )}
-          <button className={styles.terminalBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
+          <ThemeToggle />
+          {user?.role === 'admin' && (
+            <button className={styles.terminalBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
+          )}
+
           <button className={[styles.terminalBtn, styles.terminalBtnDanger].join(' ')} onClick={() => closeSession.mutate()}>
             Close Register
           </button>
@@ -278,8 +298,20 @@ export default function POSTerminal() {
 
           <div className={styles.cartPanel}>
             <div className={styles.cartHeader}>
-              <span className={styles.cartTitle}>Order {currentOrder ? `#${currentOrder.order_number}` : ''}</span>
-              {activeTable && <span className={styles.cartTableBadge}>Table {activeTable.table_number}</span>}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span className={styles.cartTitle}>Order {currentOrder ? `#${currentOrder.order_number}` : ''}</span>
+                {orderDetail?.customer_name && (
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b' }}>👤 {orderDetail.customer_name}</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {currentOrder && (
+                  <button className={styles.cartBtnSend} style={{ padding: '4px 8px', fontSize: 10, background: '#e2e8f0', color: '#000' }} onClick={() => setShowCustomer(true)}>
+                    + Customer
+                  </button>
+                )}
+                {activeTable && <span className={styles.cartTableBadge}>Table {activeTable.table_number}</span>}
+              </div>
             </div>
 
             <div className={styles.cartItems}>
@@ -414,6 +446,40 @@ export default function POSTerminal() {
           <div className={styles.successAmount}>₹{parseFloat(successAmount).toFixed(0)}</div>
           <div className={styles.successLabel}>Payment Successful</div>
           <div className={styles.successSub}>Click anywhere to continue</div>
+        </div>
+      )}
+
+      {showCustomer && (
+        <div className={styles.paymentOverlay} onClick={() => setShowCustomer(false)}>
+          <div className={styles.paymentModal} onClick={e => e.stopPropagation()} style={{ minHeight: 400 }}>
+            <div className={styles.paymentHeader}>
+              <span className={styles.paymentTitle}>Assign Customer</span>
+              <button className={styles.paymentClose} onClick={() => setShowCustomer(false)}>✕</button>
+            </div>
+            <div className={styles.paymentBody}>
+              <input 
+                className={styles.productSearchInput} 
+                style={{ width: '100%', marginBottom: 16 }}
+                placeholder="Search phone or name..." 
+                value={custSearch} 
+                onChange={e => setCustSearch(e.target.value)} 
+                autoFocus
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 300, overflowY: 'auto' }}>
+                {searchCustomers.isLoading ? <div style={{ textAlign: 'center', padding: 20 }}>Searching...</div> : null}
+                {searchCustomers.data?.data?.length === 0 ? <div style={{ textAlign: 'center', padding: 20, color: '#64748b' }}>No customers found.</div> : null}
+                {searchCustomers.data?.data?.map(c => (
+                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '2px solid var(--border-medium)', cursor: 'pointer' }} onClick={() => setOrderCustomer.mutate(c.id)}>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{c.name}</div>
+                      <div style={{ fontSize: 10, color: '#64748b' }}>{c.phone || c.email || 'No contact info'}</div>
+                    </div>
+                    <span className={[styles.badge, styles.badgeBlue].join(' ')}>Select</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

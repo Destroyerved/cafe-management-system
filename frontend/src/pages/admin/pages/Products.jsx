@@ -118,7 +118,7 @@ export default function Products() {
       <div className={styles.catTabs}>
         <button
           className={[styles.catTab, !catFilter ? styles.catTabActive : ''].join(' ')}
-          style={{ background: !catFilter ? '#facc15' : '#fff' }}
+          style={{ background: !catFilter ? '#facc15' : 'var(--surface)', color: !catFilter ? '#000' : 'var(--text-primary)' }}
           onClick={() => handleCat('')}
         >
           All ({meta?.total ?? '…'})
@@ -127,7 +127,7 @@ export default function Products() {
           <button
             key={c.id}
             className={[styles.catTab, catFilter === String(c.id) ? styles.catTabActive : ''].join(' ')}
-            style={{ background: catFilter === String(c.id) ? c.color : '#fff' }}
+            style={{ background: catFilter === String(c.id) ? c.color : 'var(--surface)', color: catFilter === String(c.id) ? '#000' : 'var(--text-primary)' }}
             onClick={() => handleCat(String(c.id))}
           >
             {c.name}
@@ -199,9 +199,9 @@ export default function Products() {
                         />
                       ) : null}
                       <div style={{
-                        width: 40, height: 40, background: p.category_color || '#f1f5f9',
-                        border: '2px solid #e2e8f0', display: p.image_url ? 'none' : 'flex',
-                        alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                        width: 40, height: 40, background: p.category_color || 'var(--surface-alt)',
+                        border: '2px solid var(--border-medium)', display: p.image_url ? 'none' : 'flex',
+                        alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#000'
                       }}>🍽</div>
                     </td>
 
@@ -219,7 +219,7 @@ export default function Products() {
                     <td className={styles.td}>
                       <span
                         className={styles.badge}
-                        style={{ background: p.category_color || '#f1f5f9', color: '#000', borderColor: '#000', fontSize: 9 }}
+                        style={{ background: p.category_color || 'var(--surface-alt)', color: p.category_color ? '#000' : 'var(--text-primary)', borderColor: 'var(--border-medium)', fontSize: 9 }}
                       >
                         {p.category_name || '—'}
                       </span>

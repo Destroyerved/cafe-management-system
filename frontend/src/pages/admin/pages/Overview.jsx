@@ -29,7 +29,7 @@ export default function Overview() {
 
     const { data: topCategories } = useQuery({
         queryKey: ['top-categories', period],
-        queryFn: () => api.get(`/reports/top-categories?period=${period}`).then(r => r.data.data),
+        queryFn: () => api.get(`/reports/top-categories?period=${period}`).then(r => r.data.data.map(d => ({...d, revenue: parseFloat(d.revenue)}))),
     });
 
     const { data: topOrders } = useQuery({
@@ -57,10 +57,9 @@ export default function Overview() {
                             onClick={() => setPeriod(p)}
                             className={styles.actionBtn}
                             style={{
-                                background: period === p ? '#facc15' : '#fff',
-                                color: '#000',
-                                boxShadow: period === p ? '2px 2px 0 0 #000' : 'none',
-                                border: '2px solid #000',
+                                background: period === p ? '#facc15' : 'var(--surface)', color: period === p ? '#000' : 'var(--text-primary)',
+                                boxShadow: period === p ? '2px 2px 0 0 var(--border-medium)' : 'none',
+                                border: '2px solid var(--border-medium)',
                                 padding: '6px 14px',
                                 fontSize: 10,
                             }}

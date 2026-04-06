@@ -31,3 +31,28 @@
   transition: all 0.15s;
 }
 .logout:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+
+.themeToggle {
+  background: var(--bg);
+  border: var(--border-medium);
+  box-shadow: var(--shadow-button);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.themeToggle:hover {
+  box-shadow: var(--shadow-button-hover);
+  transform: translate(2px, 2px);
+}
+
+.themeToggle:active {
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
+

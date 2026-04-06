@@ -6,7 +6,9 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuthStore } from '../../store/authStore';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import styles from './Auth.module.css';
+
 
 const DEMO_CREDS = [
   { label: 'Admin', email: 'admin@pos-cafe.com', password: 'Admin@1234' },
@@ -60,9 +62,13 @@ export default function LoginPage() {
           <div className={styles.logoRow}>
             <div className={styles.logoIcon}>C</div>
             <span className={styles.title}>POS Cafe</span>
+            <div style={{ marginLeft: 'auto' }}>
+              <ThemeToggle />
+            </div>
           </div>
           <p className={styles.sub}>Sign in to your account to continue</p>
         </div>
+
 
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <div className={styles.field}>

@@ -17,9 +17,9 @@ const list = async ({ search, page = 1, limit = 30 } = {}) => {
   const applyFilters = (q) => {
     if (search) {
       q.where(function () {
-        this.whereIlike('name', `%${search}%`)
-            .orWhereIlike('email', `%${search}%`)
-            .orWhereIlike('phone', `%${search}%`);
+        this.where('name', 'ilike', `%${search}%`)
+            .orWhere('email', 'ilike', `%${search}%`)
+            .orWhere('phone', 'ilike', `%${search}%`);
       });
     }
     return q;

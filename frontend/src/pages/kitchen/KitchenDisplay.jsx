@@ -5,7 +5,9 @@ import api from '../../api/axios';
 import socket, { joinKitchen } from '../../socket';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import styles from './Kitchen.module.css';
+
 
 const STAGES = ['to_cook', 'preparing', 'completed'];
 const STAGE_LABELS = { to_cook: 'To Cook', preparing: 'Preparing', completed: 'Completed' };
@@ -113,6 +115,22 @@ export default function KitchenDisplay() {
     }
   }, []);
 
+  const outOfStock = useCallback(async (e, productName) => {
+    e.stopPropagation();
+    if (window.confirm(`Mark ${productName} as out of stock (86)?`)) {
+       try { await api.post('/products/86', { name: productName }); toast.success(`${productName} is 86'd`); }
+       catch(e) { toast.error('Failed to 86 item'); }
+    }
+  }, []);
+
+  const getUrgencyClass = (sent_at, stage) => {
+    if (stage === 'completed') return '';
+    const diff = Math.floor((Date.now() - new Date(sent_at).getTime()) / 60000);
+    if (diff >= 15) return styles.urgencyRed;
+    if (diff >= 5) return styles.urgencyYellow;
+    return styles.urgencyGreen;
+  };
+
   const counts = STAGES.reduce((acc, s) => {
     acc[s] = tickets.filter(t => t.status === s).length;
     return acc;
@@ -139,7 +157,9 @@ export default function KitchenDisplay() {
           </span>
         </div>
         <div className={styles.headerRight}>
+          <ThemeToggle />
           <span className={styles.clock}>{clock}</span>
+
           <button className={[styles.filterBtn, filter === 'all' ? styles.filterBtnActive : ''].join(' ')} onClick={() => setFilter('all')}>
             All <span className={styles.countBadge}>{tickets.length}</span>
           </button>
@@ -174,7 +194,7 @@ export default function KitchenDisplay() {
                     .map(ticket => (
                       <div
                         key={ticket.id}
-                        className={[styles.ticketCard, styles[`ticket_${stage}`], newTicketIds.has(ticket.id) ? styles.ticketNew : ''].join(' ')}
+                        className={[styles.ticketCard, styles[`ticket_${stage}`], newTicketIds.has(ticket.id) ? styles.ticketNew : '', getUrgencyClass(ticket.sent_at, stage)].join(' ')}
                         onClick={() => advanceTicket(ticket)}
                         title={stage !== 'completed' ? `Click to move → ${STAGE_LABELS[NEXT_STAGE[stage]]}` : ''}
                       >
@@ -191,13 +211,21 @@ export default function KitchenDisplay() {
                           {ticket.items?.map(item => (
                             <div
                               key={item.id}
-                              className={[styles.ticketItem, item.is_prepared ? styles.ticketItemDone : ''].join(' ')}
-                              onClick={(e) => toggleItem(e, item.id)}
-                              title="Click to mark prepared"
+                              style={{ display: 'flex', gap: 6, alignItems: 'center' }}
                             >
-                              <span className={styles.ticketItemQty}>{Math.floor(item.quantity)}×</span>
-                              <span className={styles.ticketItemName}>{item.product_name}</span>
-                              {item.is_prepared && <span className={styles.ticketItemCheck}>✓</span>}
+                              <div
+                                className={[styles.ticketItem, item.is_prepared ? styles.ticketItemDone : ''].join(' ')}
+                                onClick={(e) => toggleItem(e, item.id)}
+                                title="Click to mark prepared"
+                                style={{ flex: 1 }}
+                              >
+                                <span className={styles.ticketItemQty}>{Math.floor(item.quantity)}×</span>
+                                <span className={styles.ticketItemName}>{item.product_name}</span>
+                                {item.is_prepared && <span className={styles.ticketItemCheck}>✓</span>}
+                              </div>
+                              {stage !== 'completed' && (
+                                <button onClick={(e) => outOfStock(e, item.product_name)} style={{ background: '#ef4444', color: '#fff', border: '2px solid #000', padding: '2px 6px', fontSize: 10, fontWeight: 'bold' }}>86</button>
+                              )}
                             </div>
                           ))}
                         </div>

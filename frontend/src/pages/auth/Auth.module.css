@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+  background: var(--surface);
   position: relative;
   overflow: hidden;
   padding: 24px;
@@ -13,7 +13,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, #e2e8f0 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, var(--bg-dots) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
   z-index: 0;
 }
@@ -21,9 +21,9 @@
 .card {
   width: 100%;
   max-width: 440px;
-  background: #ffffff;
-  border: 4px solid #000000;
-  box-shadow: 8px 8px 0 0 #000000;
+  background: var(--surface);
+  border: 4px solid var(--border-strong);
+  box-shadow: 8px 8px 0 0 var(--shadow-color);
   padding: 48px 44px;
   position: relative;
   z-index: 1;
@@ -45,15 +45,16 @@
 .logoIcon {
   width: 42px;
   height: 42px;
-  background: #facc15;
-  border: 4px solid #000000;
-  box-shadow: 3px 3px 0 0 #000;
+  background: var(--accent);
+  border: 4px solid var(--border-strong);
+  box-shadow: 3px 3px 0 0 var(--shadow-color);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
   font-weight: 900;
+  color: var(--text-on-accent);
 }
 
 .title {
@@ -61,13 +62,13 @@
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.03em;
-  color: #000000;
+  color: var(--text-primary);
 }
 
 .sub {
   font-size: 13px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
@@ -86,32 +87,32 @@
 .label {
   font-size: 10px;
   font-weight: 900;
-  color: #000000;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .input {
   padding: 12px 14px;
-  border: 4px solid #000000;
+  border: 4px solid var(--border-strong);
   border-radius: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
-  background: #ffffff;
+  color: var(--text-primary);
+  background: var(--surface);
   outline: none;
-  transition: all 200ms ease-in-out;
+  transition: var(--transition);
   width: 100%;
-  box-shadow: 4px 4px 0 0 #000000;
+  box-shadow: var(--shadow-input);
 }
 
 .input:focus {
-  box-shadow: 6px 6px 0 0 #facc15;
+  box-shadow: var(--shadow-input-focus);
 }
 
 .inputError {
-  border-color: #dc2626;
-  box-shadow: 4px 4px 0 0 #dc2626;
+  border-color: var(--red);
+  box-shadow: 4px 4px 0 0 var(--red);
 }
 
 .passWrap {
@@ -132,7 +133,7 @@
   font-size: 10px;
   font-weight: 900;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 4px 6px;
@@ -140,13 +141,13 @@
 }
 
 .eye:hover {
-  color: #000000;
+  color: var(--text-primary);
 }
 
 .error {
   font-size: 10px;
   font-weight: 900;
-  color: #dc2626;
+  color: var(--red);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -161,28 +162,28 @@
 .rule {
   font-size: 9px;
   font-weight: 900;
-  color: #94a3b8;
+  color: var(--text-faint);
   padding: 4px 10px;
-  background: #ffffff;
-  border: 2px solid #e2e8f0;
+  background: var(--surface);
+  border: 2px solid var(--border-medium);
   border-radius: 9999px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  transition: all 200ms ease-in-out;
+  transition: var(--transition);
 }
 
 .ruleOk {
-  background: #facc15;
-  border-color: #000000;
-  color: #000000;
+  background: var(--accent);
+  border-color: var(--border-strong);
+  color: var(--text-on-accent);
 }
 
 .btn {
   width: 100%;
   padding: 15px;
-  background: #000000;
-  color: #ffffff;
-  border: 4px solid #000000;
+  background: var(--border-strong);
+  color: var(--text-on-dark);
+  border: 4px solid var(--border-strong);
   border-radius: 0;
   font-size: 12px;
   font-weight: 900;
@@ -190,19 +191,25 @@
   letter-spacing: 0.1em;
   cursor: pointer;
   margin-top: 6px;
-  transition: all 200ms ease-in-out;
+  transition: var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 52px;
-  box-shadow: 4px 4px 0 0 #000000;
+  box-shadow: var(--shadow-input);
   font-family: 'Inter', sans-serif;
 }
 
+[data-theme='dark'] .btn {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-color: var(--accent);
+}
+
 .btn:hover:not(:disabled) {
-  background: #facc15;
-  color: #000000;
-  box-shadow: 2px 2px 0 0 #000000;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-button-hover);
   transform: translate(2px, 2px);
 }
 
@@ -221,9 +228,7 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .switch {
@@ -231,32 +236,32 @@
   margin-top: 24px;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .switchLink {
-  color: #000000;
+  color: var(--text-primary);
   font-weight: 900;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .switchLink:hover {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .demoSection {
   margin-top: 20px;
   padding-top: 18px;
-  border-top: 2px dashed #e2e8f0;
+  border-top: 2px dashed var(--border-medium);
 }
 
 .demoLabel {
   font-size: 9px;
   font-weight: 900;
-  color: #94a3b8;
+  color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   text-align: center;
@@ -271,23 +276,24 @@
 .demoBtn {
   flex: 1;
   padding: 10px 6px;
-  background: #ffffff;
-  color: #000000;
-  border: 3px solid #000000;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 3px solid var(--border-strong);
   border-radius: 0;
   font-size: 9px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
-  box-shadow: 3px 3px 0 0 #000000;
-  transition: all 150ms ease-in-out;
+  box-shadow: var(--shadow-button-sm);
+  transition: var(--transition-fast);
   font-family: 'Inter', sans-serif;
 }
 
 .demoBtn:hover {
-  background: #facc15;
-  box-shadow: 1px 1px 0 0 #000000;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: 1px 1px 0 0 var(--shadow-color);
   transform: translate(2px, 2px);
 }
 

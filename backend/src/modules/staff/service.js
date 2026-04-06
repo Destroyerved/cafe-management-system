@@ -113,6 +113,15 @@ const getStaffSummary = async () => {
       .select(db.raw('COALESCE(SUM(amount), 0) as total_paid'))
       .first();
 
+    const avg_order = parseInt(orders.total_orders) > 0 ? parseFloat(orders.total_revenue) / parseInt(orders.total_orders) : 0;
+    
+    // Calculate cafe-wide ATPT for kitchen staff
+    const atpt = await db('kitchen_tickets')
+      .where('status', 'completed')
+      .select(db.raw('AVG(EXTRACT(EPOCH FROM (completed_at - sent_at))/60) as avg_mins'))
+      .first();
+    const avg_prep_time = parseFloat(atpt?.avg_mins || 0).toFixed(1);
+
     return {
       ...s,
       total_sessions: parseInt(sessions.total_sessions),
@@ -120,6 +129,8 @@ const getStaffSummary = async () => {
       total_orders: parseInt(orders.total_orders),
       total_revenue: parseFloat(orders.total_revenue).toFixed(2),
       total_paid: parseFloat(paid.total_paid).toFixed(2),
+      avg_order: avg_order.toFixed(2),
+      avg_prep_time: avg_prep_time
     };
   }));
 

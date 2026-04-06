@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const helmet = require('helmet');
@@ -25,7 +26,7 @@ app.use(cookieParser());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 100,
   message: { success: false, message: 'Too many requests, try again later' },
 });
 app.use('/api/auth', authLimiter);
@@ -68,5 +69,14 @@ io.on('connection', (socket) => {
 });
 
 app.use(errorHandler);
+
+// Serve Frontend in Production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+  });
+}
 
 module.exports = { app, server };

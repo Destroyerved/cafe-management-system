@@ -30,14 +30,22 @@ export default function Staff() {
       {/* STAFF SUMMARY CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
         {summary?.map(s => (
-          <div key={s.id} className={styles.kpiCard} style={{ borderLeft: `6px solid ${s.role === 'admin' ? '#facc15' : s.role === 'kitchen' ? '#16a34a' : '#2563eb'}` }}>
+          <div key={s.id} className={styles.kpiCard} style={{ borderLeft: `6px solid ${s.role === 'admin' ? '#facc15' : s.role === 'kitchen' ? '#ef4444' : '#2563eb'}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div style={{ width: 36, height: 36, background: '#facc15', border: '3px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16 }}>
+              <div style={{ width: 36, height: 36, background: s.role === 'kitchen' ? '#ef4444' : s.role === 'admin' ? '#facc15' : '#2563eb', color: s.role === 'admin' ? '#000' : '#fff', border: '3px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16 }}>
                 {s.name[0]}
               </div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 900, fontSize: 13, textTransform: 'uppercase' }}>{s.name}</div>
-                <span className={[styles.badge, s.role === 'admin' ? styles.badgeAmber : styles.badgeBlue].join(' ')}>{s.role}</span>
+                <span className={[styles.badge, s.role === 'admin' ? styles.badgeAmber : s.role === 'kitchen' ? styles.badgeAmber : styles.badgeBlue].join(' ')} style={s.role === 'kitchen' ? {background:'#ef4444', color:'#fff', borderColor:'#000'} : {}}>{s.role}</span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 20, fontWeight: 900, lineHeight: 1 }}>
+                  {s.role === 'kitchen' ? `${s.avg_prep_time}` : `₹${parseFloat(s.avg_order).toFixed(0)}`}
+                </div>
+                <div style={{ fontSize: 8, fontWeight: 900, color: '#64748b', textTransform: 'uppercase' }}>
+                  {s.role === 'kitchen' ? 'ATPT (mins)' : 'Avg Order Val'}
+                </div>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -47,15 +55,15 @@ export default function Staff() {
                 ['Orders', s.total_orders],
                 ['Revenue', `₹${parseFloat(s.total_revenue).toFixed(0)}`],
               ].map(([l, v]) => (
-                <div key={l} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '6px 10px' }}>
+                <div key={l} style={{ background: 'var(--surface-alt)', border: '1px solid var(--border-medium)', padding: '6px 10px' }}>
                   <div style={{ fontSize: 8, fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</div>
                   <div style={{ fontWeight: 900, fontSize: 15 }}>{v}</div>
                 </div>
               ))}
             </div>
             <div style={{ marginTop: 10, padding: '8px 10px', background: '#fef3c7', border: '2px solid #d97706', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase' }}>Total Paid</span>
-              <span style={{ fontWeight: 900, fontSize: 14 }}>₹{parseFloat(s.total_paid).toFixed(0)}</span>
+              <span style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', color: '#000' }}>Total Paid</span>
+              <span style={{ fontWeight: 900, fontSize: 14, color: '#000' }}>₹{parseFloat(s.total_paid).toFixed(0)}</span>
             </div>
           </div>
         ))}

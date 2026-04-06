@@ -109,11 +109,11 @@ export default function Floors() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
               {tables?.filter(t => t.floor_id === floor.id).map(table => (
                 <div key={table.id} style={{
-                  border: `4px solid #000`,
-                  boxShadow: table.active ? '4px 4px 0 0 #facc15' : '4px 4px 0 0 #e2e8f0',
+                  border: `4px solid var(--border-medium)`,
+                  boxShadow: table.active ? '4px 4px 0 0 #facc15' : '4px 4px 0 0 var(--border-medium)',
                   padding: '14px 10px',
                   textAlign: 'center',
-                  background: table.active ? '#fff' : '#f8fafc',
+                  background: table.active ? 'var(--surface)' : 'var(--surface-alt)',
                   cursor: 'pointer',
                   transition: 'all 150ms',
                 }}

@@ -5,6 +5,11 @@ const { validate, validateQuery } = require('../../middleware/validate');
 const { ok, created } = require('../../utils/response');
 const { createProductSchema, updateProductSchema, paginationSchema } = require('../validation/schemas');
 
+router.post('/86', requireAuth, async (req, res, next) => {
+  try { return ok(res, await service.mark86(req.body.name), 'Product marked out of stock'); }
+  catch (err) { next(err); }
+});
+
 router.use(requireAuth);
 
 router.get('/', validateQuery(paginationSchema), async (req, res, next) => {

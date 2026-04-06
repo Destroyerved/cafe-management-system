@@ -1,8 +1,13 @@
 const db = require('../../db');
 
-const getPeriodDates = (period) => {
+const getPeriodDates = ({ period, start_date, end_date }) => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  if (period === 'custom' && start_date && end_date) {
+    return { from: new Date(start_date), to: new Date(new Date(end_date).setHours(23, 59, 59, 999)) };
+  }
+
   switch (period) {
     case 'today':
       return { from: today, to: now };
@@ -23,8 +28,8 @@ const getPeriodDates = (period) => {
   }
 };
 
-const getDashboard = async ({ pos_config_id, period = 'today', session_id, responsible_id, product_id } = {}) => {
-  const { from, to } = getPeriodDates(period);
+const getDashboard = async ({ pos_config_id, period = 'today', start_date, end_date, session_id, responsible_id, product_id } = {}) => {
+  const { from, to } = getPeriodDates({ period, start_date, end_date });
 
   const query = db('orders')
     .leftJoin('sessions', 'orders.session_id', 'sessions.id')
@@ -44,9 +49,11 @@ const getDashboard = async ({ pos_config_id, period = 'today', session_id, respo
     );
   }
 
-  const orders = await query.select('orders.total', 'orders.id');
+  const orders = await query.select('orders.total', 'orders.tax_amount', 'orders.id');
   const total_orders = orders.length;
   const revenue = orders.reduce((s, o) => s + parseFloat(o.total), 0);
+  const tax = orders.reduce((s, o) => s + parseFloat(o.tax_amount || 0), 0);
+  const gross = revenue - tax;
   const avg_order = total_orders > 0 ? revenue / total_orders : 0;
 
   // Previous period for % change
@@ -69,14 +76,16 @@ const getDashboard = async ({ pos_config_id, period = 'today', session_id, respo
   return {
     total_orders,
     revenue: revenue.toFixed(2),
+    tax: tax.toFixed(2),
+    gross: gross.toFixed(2),
     avg_order: avg_order.toFixed(2),
     revenue_change,
     period,
   };
 };
 
-const getSalesChart = async ({ period = 'today', pos_config_id, session_id } = {}) => {
-  const { from, to } = getPeriodDates(period);
+const getSalesChart = async ({ period = 'today', start_date, end_date, pos_config_id, session_id } = {}) => {
+  const { from, to } = getPeriodDates({ period, start_date, end_date });
 
   const orders = await db('orders')
     .select('orders.total', 'orders.created_at')
@@ -104,8 +113,8 @@ const getSalesChart = async ({ period = 'today', pos_config_id, session_id } = {
   return Object.entries(grouped).map(([time, revenue]) => ({ time, revenue: revenue.toFixed(2) }));
 };
 
-const getTopCategories = async ({ period = 'today', pos_config_id } = {}) => {
-  const { from, to } = getPeriodDates(period);
+const getTopCategories = async ({ period = 'today', start_date, end_date, pos_config_id } = {}) => {
+  const { from, to } = getPeriodDates({ period, start_date, end_date });
 
   const rows = await db('order_lines')
     .select('product_categories.name as category', db.raw('SUM(order_lines.total) as revenue'))
@@ -128,8 +137,8 @@ const getTopCategories = async ({ period = 'today', pos_config_id } = {}) => {
   }));
 };
 
-const getTopProducts = async ({ period = 'today', pos_config_id } = {}) => {
-  const { from, to } = getPeriodDates(period);
+const getTopProducts = async ({ period = 'today', start_date, end_date, pos_config_id } = {}) => {
+  const { from, to } = getPeriodDates({ period, start_date, end_date });
 
   return db('order_lines')
     .select(
@@ -149,8 +158,8 @@ const getTopProducts = async ({ period = 'today', pos_config_id } = {}) => {
     .limit(5);
 };
 
-const getTopOrders = async ({ period = 'today', pos_config_id, session_id } = {}) => {
-  const { from, to } = getPeriodDates(period);
+const getTopOrders = async ({ period = 'today', start_date, end_date, pos_config_id, session_id } = {}) => {
+  const { from, to } = getPeriodDates({ period, start_date, end_date });
 
   return db('orders')
     .select(

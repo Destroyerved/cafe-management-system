@@ -5,7 +5,7 @@ const list = async ({ search, category_id, is_active, page = 1, limit = 20 } = {
   limit = parseInt(limit);
 
   const applyFilters = (q) => {
-    if (search)      q.whereIlike('products.name', `%${search}%`);
+    if (search)      q.where('products.name', 'ilike', `%${search}%`);
     if (category_id) q.where('products.category_id', category_id);
     if (is_active !== undefined)
       q.where('products.is_active', is_active === 'true' || is_active === true);
@@ -105,4 +105,9 @@ const removeVariant = async (variant_id) => {
   }
 };
 
-module.exports = { list, getById, create, update, toggleActive, addVariant, removeVariant };
+const mark86 = async (name) => {
+  const [product] = await db('products').where('name', name).update({ is_active: false }).returning('*');
+  return product;
+};
+
+module.exports = { list, getById, create, update, toggleActive, addVariant, removeVariant, mark86 };

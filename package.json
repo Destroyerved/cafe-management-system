@@ -1,0 +1,11 @@
+{
+  "name": "cafe-management-system-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && npm start",
+    "build": "npm run setup:backend && npm run build:frontend",
+    "setup:backend": "cd backend && npm install",
+    "build:frontend": "cd frontend && npm install && npm run build"
+  }
+}

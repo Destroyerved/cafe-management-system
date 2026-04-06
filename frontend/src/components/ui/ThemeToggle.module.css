@@ -1,0 +1,33 @@
+.themeToggle {
+  background: var(--accent);
+  border: 2px solid var(--border-strong);
+  box-shadow: 2px 2px 0 0 var(--shadow-color);
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.themeToggle:hover {
+  box-shadow: 1px 1px 0 0 var(--shadow-color);
+  transform: translate(1px, 1px);
+}
+
+.themeToggle:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+.icon {
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
